@@ -8,6 +8,7 @@ import { ECOGLOW_BRAND_KIT } from '../data/mockBrandKit';
  * 1. Heuristic Scan (Instant Regex & Deterministic Lexical Matches)
  * 2. LLM Semantic Verification (Gemini AI with JSON schema, with graceful fallback)
  * 3. Grounding & Anti-Hallucination Guard (Ensures 100% of flags map to real Rule IDs)
+ * 4. Proven Claims Scanner (Identifies claims backed by approved facts)
  */
 
 export class BrandLensEngine {
@@ -36,6 +37,7 @@ export class BrandLensEngine {
       return {
         originalText: text,
         flags: [],
+        provenClaimsCount: 0,
         complianceScore: 100,
         highRiskCount: 0,
         unverifiedCount: 0,
@@ -67,12 +69,16 @@ export class BrandLensEngine {
     // Step 4: Grounding Guard (Drop any flag whose ruleId does not exist in Brand Kit)
     const groundedFlags = this.filterHallucinations(mergedFlags);
 
-    // Step 5: Compute Compliance Score and Risk Stats
-    const stats = this.computeStatistics(groundedFlags);
+    // Step 5: Count Proven Claims backed by approved facts
+    const provenClaimsCount = this.countProvenClaims(text);
+
+    // Step 6: Compute Compliance Score and Risk Stats
+    const stats = this.computeStatistics(groundedFlags, provenClaimsCount);
 
     return {
       originalText: text,
       flags: groundedFlags,
+      provenClaimsCount,
       ...stats,
       analyzedAt: new Date().toISOString()
     };
@@ -80,7 +86,6 @@ export class BrandLensEngine {
 
   /**
    * Deterministic Heuristic Engine
-   * Catches high-risk claims instantly using regex without LLM delay
    */
   private runDeterministicPass(text: string): ContentFlag[] {
     const flags: ContentFlag[] = [];
@@ -96,12 +101,14 @@ export class BrandLensEngine {
         ruleId: "CP-02",
         ruleTitle: "No Absolute or Unsubstantiated Guarantees",
         policySection: "Claims Policy §2",
+        claimStatus: "no_proof_found",
         flagType: "unverified",
         severity: "high",
         explanation: '"100% guaranteed" has no approved scientific or lab proof in Brand Kit. Status: unverified (we do not label it false, but proof is required).',
         suggestedRewrite: "Designed to provide reliable everyday performance",
         detectionSource: "deterministic_heuristic",
-        status: "pending"
+        status: "pending",
+        comments: []
       });
     }
 
@@ -116,12 +123,14 @@ export class BrandLensEngine {
         ruleId: "CP-04",
         ruleTitle: "Unsubstantiated Comparative Superlatives",
         policySection: "Pricing & Comparative Policy §4",
+        claimStatus: "no_proof_found",
         flagType: "unverified",
         severity: "high",
         explanation: 'Comparative superlative claims require verifiable, current market pricing audit documentation.',
         suggestedRewrite: "Competitively priced for everyday sustainability",
         detectionSource: "deterministic_heuristic",
-        status: "pending"
+        status: "pending",
+        comments: []
       });
     }
 
@@ -136,12 +145,14 @@ export class BrandLensEngine {
         ruleId: "GW-01",
         ruleTitle: "Greenwashing & Planetary Impact Claims",
         policySection: "Environmental Claims Guidelines §1",
+        claimStatus: "no_proof_found",
         flagType: "unverified",
         severity: "high",
         explanation: 'Under CCPA Guidelines (Oct 2024), broad claims like "save the planet" require verified cradle-to-grave Life Cycle Assessment (LCA) proof.',
         suggestedRewrite: "help reduce environmental impact with verified lower emissions",
         detectionSource: "deterministic_heuristic",
-        status: "pending"
+        status: "pending",
+        comments: []
       });
     }
 
@@ -156,12 +167,14 @@ export class BrandLensEngine {
         ruleId: "FIN-01",
         ruleTitle: "No Guaranteed Returns or Zero-Risk Claims",
         policySection: "SEBI Compliance §12(a)",
+        claimStatus: "goes_against_facts",
         flagType: "contradicted",
         severity: "high",
         explanation: 'SEBI Investment Code forbids claiming financial market products carry zero risk.',
         suggestedRewrite: "systematic risk-managed strategy",
         detectionSource: "deterministic_heuristic",
-        status: "pending"
+        status: "pending",
+        comments: []
       });
     }
 
@@ -176,12 +189,14 @@ export class BrandLensEngine {
         ruleId: "FIN-01",
         ruleTitle: "No Guaranteed Returns or Zero-Risk Claims",
         policySection: "SEBI Compliance §12(a)",
+        claimStatus: "goes_against_facts",
         flagType: "contradicted",
         severity: "high",
         explanation: 'Statutory prohibition against promising fixed speculative returns without authorized prospectuses.',
         suggestedRewrite: "aims for long-term capital growth",
         detectionSource: "deterministic_heuristic",
-        status: "pending"
+        status: "pending",
+        comments: []
       });
     }
 
@@ -190,7 +205,6 @@ export class BrandLensEngine {
 
   /**
    * Semantic Rule Matcher / Deep Heuristics
-   * Catches tone mismatches, ungrounded health secrets, hype
    */
   private runDeepHeuristics(text: string): ContentFlag[] {
     const flags: ContentFlag[] = [];
@@ -206,12 +220,14 @@ export class BrandLensEngine {
         ruleId: "TV-03",
         ruleTitle: "Avoid Sensationalist & Aggressive Hype",
         policySection: "Tone & Voice Manual §3",
+        claimStatus: "no_proof_found",
         flagType: "tone_voice",
         severity: "medium",
         explanation: 'Sensationalist urgency and medical hype violates the Brand Voice guideline emphasizing humble, transparent communication.',
         suggestedRewrite: "scientifically designed and tested approach",
         detectionSource: "deterministic_heuristic",
-        status: "pending"
+        status: "pending",
+        comments: []
       });
     }
 
@@ -226,12 +242,14 @@ export class BrandLensEngine {
         ruleId: "CP-02",
         ruleTitle: "No Absolute or Unsubstantiated Guarantees",
         policySection: "Claims Policy §2",
+        claimStatus: "goes_against_facts",
         flagType: "contradicted",
         severity: "high",
         explanation: 'EcoGlow bottles are hydration vessels, not medical detox devices. Contradicts approved product specifications.',
         suggestedRewrite: "keep your water fresh throughout the day",
         detectionSource: "deterministic_heuristic",
-        status: "pending"
+        status: "pending",
+        comments: []
       });
     }
 
@@ -264,6 +282,7 @@ Return ONLY a JSON array of objects with schema:
     "ruleId": "exact Rule ID from rules above (e.g. CP-02, CP-04, GW-01, TV-03, FIN-01)",
     "ruleTitle": "rule title",
     "policySection": "policy section",
+    "claimStatus": "proven" | "no_proof_found" | "goes_against_facts",
     "flagType": "unverified" | "contradicted" | "tone_voice",
     "severity": "high" | "medium" | "low",
     "explanation": "concise explanation of violation or missing proof",
@@ -302,29 +321,46 @@ Return ONLY a JSON array of objects with schema:
         ruleId: item.ruleId,
         ruleTitle: item.ruleTitle,
         policySection: item.policySection,
+        claimStatus: item.claimStatus || 'no_proof_found',
         flagType: item.flagType || 'unverified',
         severity: item.severity || 'high',
         explanation: item.explanation,
         suggestedRewrite: item.suggestedRewrite,
         detectionSource: 'gemini_grounded',
-        status: 'pending'
+        status: 'pending',
+        comments: []
       };
     });
   }
 
   /**
-   * Grounding Guard (Crucial for Slide 9: "AI can make up rules or facts; 
-   * our code removes any flag it cannot match to a source")
+   * Grounding Guard
    */
   private filterHallucinations(flags: ContentFlag[]): ContentFlag[] {
     const validRuleIds = new Set(this.brandKit.primaryRules.map(r => r.id));
     return flags.filter(flag => {
       const isValid = validRuleIds.has(flag.ruleId);
       if (!isValid) {
-        console.warn(`[Anti-Hallucination Guard] Dropped ungrounded AI flag citing unknown rule: ${flag.ruleId}`);
+        console.warn(`[Anti-Hallucination Guard] Dropped ungrounded AI flag: ${flag.ruleId}`);
       }
       return isValid;
     });
+  }
+
+  /**
+   * Count verified/proven claims matching approved facts
+   */
+  private countProvenClaims(text: string): number {
+    let count = 0;
+    const lower = text.toLowerCase();
+    for (const fact of this.brandKit.approvedFacts) {
+      const keyWords = fact.statement.toLowerCase().split(' ').filter(w => w.length > 5);
+      const matches = keyWords.filter(k => lower.includes(k));
+      if (matches.length >= 2) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /**
@@ -347,7 +383,7 @@ Return ONLY a JSON array of objects with schema:
   /**
    * Compute Risk Metrics & Compliance Score
    */
-  private computeStatistics(flags: ContentFlag[]) {
+  private computeStatistics(flags: ContentFlag[], provenCount: number) {
     const unverified = flags.filter(f => f.flagType === 'unverified').length;
     const contradicted = flags.filter(f => f.flagType === 'contradicted').length;
     const toneVoice = flags.filter(f => f.flagType === 'tone_voice').length;
@@ -357,6 +393,7 @@ Return ONLY a JSON array of objects with schema:
     score -= contradicted * 30;
     score -= unverified * 15;
     score -= toneVoice * 10;
+    score += Math.min(10, provenCount * 5); // reward for substantiated facts!
     score = Math.max(10, Math.min(100, score));
 
     return {

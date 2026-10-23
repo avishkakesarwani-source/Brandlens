@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ContentFlag } from '../types';
-import { RefreshCw, Copy, Check, Wand2, Sparkles } from 'lucide-react';
+import { RefreshCw, Copy, Check, Wand2, Sparkles, Upload, FileText } from 'lucide-react';
+import { parseUploadedFile } from '../utils/fileParser';
 
 interface ContentEditorProps {
   draftText: string;
@@ -25,8 +26,10 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   isAnalyzing,
   activeBrandName
 }) => {
-  const [copied, setCopied] = React.useState(false);
-  const [isRawEdit, setIsRawEdit] = React.useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isRawEdit, setIsRawEdit] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isParsingFile, setIsParsingFile] = useState(false);
 
   const pendingFlags = flags.filter(f => f.status === 'pending');
 
@@ -34,6 +37,23 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     navigator.clipboard.writeText(draftText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsParsingFile(true);
+    try {
+      const parsed = await parseUploadedFile(file);
+      setUploadedFileName(parsed.fileName);
+      onChangeText(parsed.text);
+      onReanalyze();
+    } catch (err: any) {
+      alert(err.message || "Failed to extract file text");
+    } finally {
+      setIsParsingFile(false);
+    }
   };
 
   /**
@@ -69,9 +89,9 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
 
       const isSelected = selectedFlagId === flag.id;
       const highlightClass = 
-        flag.flagType === 'contradicted' 
+        flag.claimStatus === 'goes_against_facts' 
           ? 'bg-rose-200/90 text-rose-950 border-b-2 border-rose-500 hover:bg-rose-300' 
-          : flag.flagType === 'unverified'
+          : flag.claimStatus === 'no_proof_found'
           ? 'bg-amber-200/90 text-amber-950 border-b-2 border-amber-500 hover:bg-amber-300'
           : 'bg-blue-200/90 text-blue-950 border-b-2 border-blue-500 hover:bg-blue-300';
 
@@ -121,11 +141,16 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       )}
 
       {/* Editor Header */}
-      <div className="px-5 py-3 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
+      <div className="px-5 py-3 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center space-x-2">
           <span className="text-xs uppercase font-bold tracking-wider text-slate-600">
             Draft Workspace
           </span>
+          {uploadedFileName && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-teal-100 text-teal-800 flex items-center gap-1 font-mono">
+              <FileText className="w-3 h-3" /> {uploadedFileName}
+            </span>
+          )}
           <span className="text-xs text-slate-300">|</span>
           <span className="text-xs text-slate-500 font-mono">
             {draftText.length} chars · {draftText.trim().split(/\s+/).filter(Boolean).length} words
@@ -134,7 +159,19 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
 
         <div className="flex items-center space-x-2">
           
-          {/* ⚡ Magic Auto-Fix All Button (Judges LOVE this!) */}
+          {/* File Upload Button (Slide 8: Check text and Word/PDF files) */}
+          <label className="text-xs font-semibold text-slate-700 hover:text-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-colors">
+            <Upload className="w-3.5 h-3.5 text-teal-600" />
+            <span>{isParsingFile ? "Reading..." : "Upload Doc/PDF"}</span>
+            <input 
+              type="file" 
+              accept=".txt,.docx,.pdf" 
+              onChange={handleFileUpload} 
+              className="hidden" 
+            />
+          </label>
+
+          {/* ⚡ Magic Auto-Fix All Button */}
           {pendingFlags.length > 0 && (
             <button
               onClick={onAutoFixAll}
@@ -179,7 +216,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           <textarea
             value={draftText}
             onChange={(e) => onChangeText(e.target.value)}
-            placeholder="Paste your marketing draft, social ad copy, or product claims here..."
+            placeholder="Paste your marketing draft, social ad copy, or upload a Word/PDF document..."
             className="w-full h-full min-h-[350px] p-2 text-base font-sans text-slate-800 leading-relaxed focus:outline-none resize-none border border-teal-200/40 rounded-xl"
           />
         ) : (
@@ -190,19 +227,19 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       {/* Visual Helper Legend */}
       <div className="px-5 py-2.5 border-t border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between text-xs text-slate-500">
         <div className="flex items-center space-x-3">
-          <span className="font-semibold text-slate-600">Violations:</span>
+          <span className="font-semibold text-slate-600">3-Tier Verification (Slide 8):</span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-sm"></span> Contradicted Fact
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-sm"></span> Goes Against Facts
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block shadow-sm"></span> Unverified Claim
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block shadow-sm"></span> No Proof Found
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block shadow-sm"></span> Tone & Voice
           </span>
         </div>
         <div className="text-[11px] text-slate-400 italic">
-          Click any highlight to inspect exact rule & rewrite
+          Click any highlight to view rule citation, rewrite & discussion notes
         </div>
       </div>
 

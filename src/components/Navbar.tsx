@@ -1,30 +1,56 @@
 import React from 'react';
-import { ShieldCheck, BookOpen, Sparkles, Layers, Zap, Building2, Volume2, VolumeX } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  BookOpen, 
+  Sparkles, 
+  Layers, 
+  Zap, 
+  Volume2, 
+  VolumeX, 
+  Image as ImageIcon,
+  BarChart3,
+  History,
+  PlusCircle,
+  UserCheck
+} from 'lucide-react';
 import type { SampleDraft } from '../data/mockBrandKit';
+import type { UserRole } from '../types';
 import { SAMPLE_DRAFTS } from '../data/mockBrandKit';
 
 interface NavbarProps {
   onSelectSample: (sample: SampleDraft) => void;
   onOpenBrandKit: () => void;
+  onOpenCustomBrandEditor: () => void;
   onOpenRoadmap: () => void;
+  onOpenHistory: () => void;
   hasApiKey: boolean;
   onToggleApiModal: () => void;
-  activeBrand: 'ecoglow' | 'finedge';
-  onSwitchBrand: (brand: 'ecoglow' | 'finedge') => void;
+  activeBrand: string;
+  onSwitchBrand: (brandKey: 'ecoglow' | 'finedge') => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
+  activeTab: 'text' | 'image' | 'analytics';
+  onSelectTab: (tab: 'text' | 'image' | 'analytics') => void;
+  currentUserRole: UserRole;
+  onChangeUserRole: (role: UserRole) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onSelectSample,
   onOpenBrandKit,
+  onOpenCustomBrandEditor,
   onOpenRoadmap,
+  onOpenHistory,
   hasApiKey,
   onToggleApiModal,
   activeBrand,
   onSwitchBrand,
   soundEnabled,
-  onToggleSound
+  onToggleSound,
+  activeTab,
+  onSelectTab,
+  currentUserRole,
+  onChangeUserRole
 }) => {
   return (
     <header className="border-b border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-40 shadow-xs">
@@ -44,104 +70,156 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Enterprise Ready
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">Team NovaTech · AI Brand & Claim Verification Gateway</p>
+            <p className="text-[11px] text-slate-500 font-medium">Pre-Publishing Brand & Claim Verification Gateway</p>
           </div>
         </div>
 
-        {/* Center: Brand Switcher & Judge Demos */}
-        <div className="hidden lg:flex items-center space-x-2 bg-slate-100/80 p-1 rounded-xl border border-slate-200">
-          <div className="flex items-center px-2 text-xs font-bold text-slate-500 gap-1">
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Brand:</span>
+        {/* Center: Module Tabs (Text & Docs, Image Studio, Analytics Dashboard) */}
+        <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <button
+            onClick={() => onSelectTab('text')}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
+              activeTab === 'text'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Draft & Document
+          </button>
+
+          <button
+            onClick={() => onSelectTab('image')}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+              activeTab === 'image'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5 text-teal-600" />
+            <span>Image Studio (Slide 8)</span>
+          </button>
+
+          <button
+            onClick={() => onSelectTab('analytics')}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+              activeTab === 'analytics'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Rules Dashboard (Slide 8)</span>
+          </button>
+        </div>
+
+        {/* Right: Actions, Role Selector, Brand Switcher */}
+        <div className="flex items-center space-x-2">
+          
+          {/* Role Switcher (Slide 8: Roles, comments and version history) */}
+          <div className="hidden xl:flex items-center space-x-1.5 text-xs bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+            <UserCheck className="w-3.5 h-3.5 text-teal-600" />
+            <select
+              value={currentUserRole}
+              onChange={(e) => onChangeUserRole(e.target.value as any)}
+              className="bg-transparent font-bold text-slate-700 focus:outline-none cursor-pointer"
+            >
+              <option value="Creator">Role: Creator</option>
+              <option value="Brand Manager">Role: Manager</option>
+              <option value="Reviewer">Role: Legal</option>
+            </select>
           </div>
 
-          <button
-            onClick={() => onSwitchBrand('ecoglow')}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all ${
-              activeBrand === 'ecoglow'
-                ? 'bg-white text-teal-800 shadow-sm border border-slate-200/60'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            🌿 EcoGlow (CPG)
-          </button>
+          {/* Brand Switcher Pills */}
+          <div className="hidden 2xl:flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-semibold">
+            <button
+              onClick={() => onSwitchBrand('ecoglow')}
+              className={`px-2 py-1 rounded-md transition-all ${activeBrand.toLowerCase().includes('eco') ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600'}`}
+            >
+              EcoGlow
+            </button>
+            <button
+              onClick={() => onSwitchBrand('finedge')}
+              className={`px-2 py-1 rounded-md transition-all ${activeBrand.toLowerCase().includes('fin') ? 'bg-white text-indigo-800 shadow-xs' : 'text-slate-600'}`}
+            >
+              FinEdge
+            </button>
+          </div>
 
-          <button
-            onClick={() => onSwitchBrand('finedge')}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all ${
-              activeBrand === 'finedge'
-                ? 'bg-white text-indigo-800 shadow-sm border border-slate-200/60'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            💳 FinEdge (SEBI Fintech)
-          </button>
-
-          <div className="h-4 w-[1px] bg-slate-300 mx-1" />
-
+          {/* Quick Demo Button */}
           <button
             onClick={() => onSelectSample(SAMPLE_DRAFTS[0])}
-            className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold px-2.5 py-1 rounded-lg border border-amber-300 transition-colors flex items-center gap-1"
+            className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold px-2.5 py-1.5 rounded-lg border border-amber-300 transition-colors flex items-center gap-1"
             title="Load Slide 5 EcoGlow demo with 3 unverified claims"
           >
             <Zap className="h-3 w-3 text-amber-600 fill-amber-500" />
-            <span>Slide 5 Demo</span>
+            <span className="hidden sm:inline">Slide 5 Demo</span>
           </button>
-        </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center space-x-2">
-          
-          {/* Audio Chime Toggle */}
+          {/* Version History Button (Slide 8) */}
+          <button
+            onClick={onOpenHistory}
+            className="text-xs font-semibold text-slate-700 hover:text-teal-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 border border-slate-200 flex items-center gap-1 transition-colors"
+            title="Version History & Audit Log"
+          >
+            <History className="h-3.5 h-3.5 text-slate-600" />
+            <span className="hidden lg:inline">History</span>
+          </button>
+
+          {/* Brand Kit & Custom Brand */}
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={onOpenBrandKit}
+              className="text-xs font-semibold text-slate-700 hover:text-teal-700 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 border border-slate-200 flex items-center gap-1 transition-colors"
+              title="Inspect Active Brand Rules & Facts"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-teal-600" />
+              <span className="hidden lg:inline">Brand Kit</span>
+            </button>
+
+            <button
+              onClick={onOpenCustomBrandEditor}
+              className="text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 px-2.5 py-1.5 rounded-lg border border-teal-200 flex items-center gap-1 transition-colors"
+              title="Add or Customize Brand Kit for ANY brand"
+            >
+              <PlusCircle className="h-3.5 w-3.5 text-teal-700" />
+              <span>+ Custom Brand</span>
+            </button>
+          </div>
+
+          {/* Sound Toggle */}
           <button
             onClick={onToggleSound}
-            className={`p-2 rounded-lg border transition-colors ${
+            className={`p-1.5 rounded-lg border transition-colors ${
               soundEnabled ? 'bg-slate-50 text-teal-700 border-slate-200' : 'bg-slate-100 text-slate-400 border-slate-200'
             }`}
             title={soundEnabled ? "Audio chimes active" : "Audio muted"}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
           </button>
 
-          <button
-            onClick={onOpenBrandKit}
-            className="text-xs font-semibold text-slate-700 hover:text-teal-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 border border-slate-200 flex items-center gap-1.5 transition-colors"
-          >
-            <BookOpen className="h-4 w-4 text-teal-600" />
-            <span>Brand Kit</span>
-          </button>
-
-          <button
-            onClick={onOpenRoadmap}
-            className="text-xs font-semibold text-indigo-700 hover:text-indigo-800 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 flex items-center gap-1.5 transition-colors"
-          >
-            <Layers className="h-4 w-4 text-indigo-600" />
-            <span>Product Roadmap</span>
-          </button>
-
+          {/* AI Settings Button */}
           <button
             onClick={onToggleApiModal}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border flex items-center gap-1.5 transition-colors ${
+            className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border flex items-center gap-1 transition-colors ${
               hasApiKey 
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-300' 
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
+            title="Configure Gemini API Key"
           >
-            <Sparkles className={`h-4 w-4 ${hasApiKey ? 'text-emerald-600' : 'text-slate-400'}`} />
-            <span>{hasApiKey ? 'Gemini Live' : 'AI Engine'}</span>
+            <Sparkles className={`h-3.5 w-3.5 ${hasApiKey ? 'text-emerald-600' : 'text-slate-400'}`} />
+            <span className="hidden sm:inline">{hasApiKey ? 'Gemini Live' : 'AI'}</span>
           </button>
 
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-500 hover:text-slate-800 p-2 rounded-lg hover:bg-slate-100 transition-colors"
-            title="GitHub Repository"
+          {/* Roadmap */}
+          <button
+            onClick={onOpenRoadmap}
+            className="text-xs font-semibold text-indigo-700 hover:text-indigo-800 px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 flex items-center gap-1 transition-colors"
           >
-            <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-              <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-            </svg>
-          </a>
+            <Layers className="h-3.5 w-3.5 text-indigo-600" />
+            <span className="hidden md:inline">Roadmap</span>
+          </button>
+
         </div>
       </div>
     </header>

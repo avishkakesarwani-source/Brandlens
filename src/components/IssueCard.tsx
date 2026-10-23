@@ -5,58 +5,84 @@ import {
   CornerDownRight, 
   Info,
   CheckCircle2,
-  RotateCcw
+  RotateCcw,
+  MessageSquare,
+  Send,
+  ShieldCheck,
+  AlertTriangle,
+  ShieldAlert
 } from 'lucide-react';
-import type { ContentFlag } from '../types';
+import type { ContentFlag, UserRole } from '../types';
 
 interface IssueCardProps {
   flag: ContentFlag;
   isSelected: boolean;
+  currentUserRole: UserRole;
   onSelect: () => void;
   onAcceptRewrite: (flagId: string, rewrite: string) => void;
   onRejectFlag: (flagId: string) => void;
   onCustomEdit: (flagId: string, customText: string) => void;
   onResetFlag: (flagId: string) => void;
+  onAddComment: (flagId: string, commentText: string) => void;
 }
 
 export const IssueCard: React.FC<IssueCardProps> = ({
   flag,
   isSelected,
+  currentUserRole,
   onSelect,
   onAcceptRewrite,
   onRejectFlag,
   onCustomEdit,
-  onResetFlag
+  onResetFlag,
+  onAddComment
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState('');
   const [customText, setCustomText] = useState(flag.suggestedRewrite);
 
   const isResolved = flag.status !== 'pending';
 
-  const getBadgeStyle = () => {
-    if (flag.flagType === 'contradicted') {
-      return 'bg-rose-100 text-rose-800 border-rose-300';
+  // Slide 8: Mark each claim: proven, no proof found, or goes against facts
+  const renderClaimStatusBadge = () => {
+    switch (flag.claimStatus) {
+      case 'proven':
+        return (
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+            Proven Fact
+          </span>
+        );
+      case 'goes_against_facts':
+        return (
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1">
+            <ShieldAlert className="w-3 h-3 text-rose-600" />
+            Goes Against Facts
+          </span>
+        );
+      case 'no_proof_found':
+      default:
+        return (
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3 text-amber-600" />
+            No Proof Found
+          </span>
+        );
     }
-    if (flag.flagType === 'unverified') {
-      return 'bg-amber-100 text-amber-800 border-amber-300';
-    }
-    return 'bg-blue-100 text-blue-800 border-blue-300';
   };
 
-  const getTypeLabel = () => {
-    switch (flag.flagType) {
-      case 'contradicted': return 'Contradicts Brand Truth';
-      case 'unverified': return 'Claim With No Proof';
-      case 'tone_voice': return 'Voice & Tone Misalignment';
-      case 'accessibility': return 'Accessibility Issue';
-      default: return 'Compliance Flag';
-    }
+  const handleSendComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    onAddComment(flag.id, newComment.trim());
+    setNewComment('');
   };
 
   return (
     <div 
       onClick={onSelect}
-      className={`rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden ${
+      className={`rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden ${
         isSelected 
           ? 'ring-2 ring-teal-600 border-teal-500 shadow-md bg-white' 
           : isResolved
@@ -65,49 +91,45 @@ export const IssueCard: React.FC<IssueCardProps> = ({
       }`}
     >
       {/* Header bar */}
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
         <div className="flex items-center space-x-2">
-          <span className={`text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${getBadgeStyle()}`}>
-            {getTypeLabel()} · {flag.severity}
+          {renderClaimStatusBadge()}
+          <span className="text-[10px] font-bold text-slate-500 uppercase">
+            {flag.severity} Severity
           </span>
-          {flag.detectionSource === 'gemini_grounded' && (
-            <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded font-mono">
-              AI Grounded
-            </span>
-          )}
         </div>
 
         {/* Status chip if resolved */}
         {isResolved && (
-          <span className={`text-xs font-medium flex items-center gap-1 ${
+          <span className={`text-xs font-semibold flex items-center gap-1 ${
             flag.status === 'accepted' || flag.status === 'custom_edited' 
               ? 'text-emerald-700' 
               : 'text-slate-500 line-through'
           }`}>
-            {flag.status === 'accepted' && <><CheckCircle2 className="w-3.5 h-3.5" /> Resolved</>}
-            {flag.status === 'custom_edited' && <><Edit3 className="w-3.5 h-3.5" /> Custom Fixed</>}
-            {flag.status === 'rejected' && 'Dismissed'}
+            {flag.status === 'accepted' && <><CheckCircle2 className="w-3.5 h-3.5" /> Replaced</>}
+            {flag.status === 'custom_edited' && <><Edit3 className="w-3.5 h-3.5" /> Custom Edit</>}
+            {flag.status === 'rejected' && 'Overruled'}
           </span>
         )}
       </div>
 
       {/* Body content */}
       <div className="p-4 space-y-3">
-        {/* Highlighted text snippet */}
+        {/* Flagged quote */}
         <div>
-          <div className="text-[11px] uppercase font-semibold text-slate-400 tracking-wider mb-1">
-            Flagged Excerpt
+          <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">
+            Flagged Excerpt in Draft
           </div>
-          <div className="text-sm font-medium text-rose-900 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 inline-block font-mono">
+          <div className="text-sm font-semibold text-rose-900 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 inline-block font-mono">
             "{flag.matchedText}"
           </div>
         </div>
 
         {/* Rule citation */}
-        <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs text-slate-700">
-          <div className="flex items-center gap-1 font-semibold text-slate-900 mb-0.5">
+        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70 text-xs text-slate-700">
+          <div className="flex items-center gap-1 font-bold text-slate-900 mb-0.5">
             <Info className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
-            <span>Rule Broken: {flag.policySection}</span>
+            <span>Rule Broken: {flag.policySection} — {flag.ruleTitle}</span>
           </div>
           <p className="text-slate-600 text-xs leading-relaxed mt-1">
             {flag.explanation}
@@ -116,18 +138,18 @@ export const IssueCard: React.FC<IssueCardProps> = ({
 
         {/* Suggested Rewrite */}
         {!isResolved && (
-          <div className="bg-emerald-50/60 p-3 rounded-lg border border-emerald-200/80">
-            <div className="text-[11px] font-semibold text-emerald-900 uppercase tracking-wider flex items-center gap-1 mb-1.5">
+          <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200">
+            <div className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1 mb-1">
               <CornerDownRight className="w-3.5 h-3.5 text-emerald-600" />
               Suggested Compliant Rewrite
             </div>
 
             {isEditing ? (
-              <div className="space-y-2">
+              <div className="space-y-2 mt-2">
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  className="w-full text-xs p-2 rounded border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white"
+                  className="w-full text-xs p-2 rounded-lg border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white"
                   rows={2}
                 />
                 <div className="flex justify-end gap-2">
@@ -153,7 +175,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 </div>
               </div>
             ) : (
-              <p className="text-xs font-medium text-emerald-950 leading-relaxed italic">
+              <p className="text-xs font-semibold text-emerald-950 leading-relaxed italic">
                 "{flag.suggestedRewrite}"
               </p>
             )}
@@ -163,65 +185,115 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         {/* If already resolved, display the replacement */}
         {isResolved && (
           <div className="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
-            <span className="font-semibold text-slate-800">Action Taken: </span>
+            <span className="font-semibold text-slate-800">Resolution: </span>
             {flag.status === 'accepted' && `Applied suggested fix: "${flag.suggestedRewrite}"`}
             {flag.status === 'custom_edited' && `Applied custom edit: "${flag.customRewrite || customText}"`}
             {flag.status === 'rejected' && 'Creator marked as false flag / approved exception'}
           </div>
         )}
+
+        {/* Slide 8: Comments thread */}
+        {showComments && (
+          <div className="pt-2 border-t border-slate-100 space-y-2 text-xs">
+            <span className="font-bold text-slate-700 text-[11px]">Team Comments & Rationale ({flag.comments.length})</span>
+            <div className="space-y-1.5 max-h-28 overflow-y-auto">
+              {flag.comments.length > 0 ? (
+                flag.comments.map((c) => (
+                  <div key={c.id} className="p-2 rounded bg-slate-100 text-slate-800">
+                    <div className="flex justify-between text-[10px] text-slate-500 font-semibold mb-0.5">
+                      <span>{c.author} ({c.role})</span>
+                      <span>{c.timestamp}</span>
+                    </div>
+                    <p className="text-xs">{c.text}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[11px] text-slate-400 italic">No notes added yet.</p>
+              )}
+            </div>
+
+            <form onSubmit={handleSendComment} className="flex gap-1.5 pt-1">
+              <input
+                type="text"
+                placeholder={`Leave note as ${currentUserRole}...`}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="text-xs p-1.5 rounded border border-slate-200 flex-1 bg-white"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                type="submit"
+                onClick={(e) => e.stopPropagation()}
+                className="px-2 py-1 bg-teal-700 text-white rounded text-xs flex items-center gap-1"
+              >
+                <Send className="w-3 h-3" />
+              </button>
+            </form>
+          </div>
+        )}
+
       </div>
 
       {/* Action footer */}
       <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        
+        {/* Toggle Comments Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowComments(!showComments)}
+          }
+          className="text-xs text-slate-500 hover:text-teal-700 flex items-center gap-1 font-medium transition-colors"
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>Notes ({flag.comments.length})</span>
+        </button>
+
         {!isResolved ? (
-          <>
+          <div className="flex items-center space-x-1.5">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onRejectFlag(flag.id);
               }}
-              className="text-xs text-slate-500 hover:text-slate-700 px-2 py-1 rounded hover:bg-slate-200/60 font-medium transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded font-medium transition-colors"
             >
-              Dismiss Flag
+              Overrule
             </button>
 
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-                className="text-xs text-slate-600 hover:text-slate-800 px-2.5 py-1 rounded border border-slate-200 hover:bg-white font-medium flex items-center gap-1 transition-colors"
-              >
-                <Edit3 className="w-3 h-3" />
-                <span>Edit</span>
-              </button>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAcceptRewrite(flag.id, flag.suggestedRewrite);
-                }}
-                className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 shadow-sm transition-colors"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Accept Rewrite</span>
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="w-full flex justify-end">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onResetFlag(flag.id);
+                setIsEditing(true);
               }}
-              className="text-xs text-slate-500 hover:text-teal-700 flex items-center gap-1 font-medium transition-colors"
+              className="text-xs text-slate-600 hover:text-slate-800 px-2.5 py-1 rounded border border-slate-200 bg-white font-medium flex items-center gap-1 transition-colors"
             >
-              <RotateCcw className="w-3 h-3" />
-              <span>Undo Decision</span>
+              <Edit3 className="w-3 h-3" />
+              <span>Edit</span>
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAcceptRewrite(flag.id, flag.suggestedRewrite);
+              }}
+              className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm transition-transform active:scale-95"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Accept Fix</span>
             </button>
           </div>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onResetFlag(flag.id);
+            }}
+            className="text-xs text-slate-500 hover:text-teal-700 flex items-center gap-1 font-medium transition-colors"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Undo</span>
+          </button>
         )}
       </div>
     </div>

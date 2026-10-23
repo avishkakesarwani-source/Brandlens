@@ -1,9 +1,16 @@
 import type { BrandKit } from '../types';
 
 export const ECOGLOW_BRAND_KIT: BrandKit = {
+  id: "ecoglow",
   brandName: "EcoGlow",
   tagline: "Sustainable Daily Essentials",
   industry: "Consumer Goods / Eco-Friendly Packaging",
+  colors: [
+    { name: "Ocean Teal", hex: "#0d9488", usage: "Primary" },
+    { name: "Emerald Mist", hex: "#14b8a6", usage: "Secondary" },
+    { name: "Coral Caution", hex: "#e06a55", usage: "Accent" },
+    { name: "Warm Off-White", hex: "#faf8f5", usage: "Background" }
+  ],
   primaryRules: [
     {
       id: "CP-02",
@@ -93,9 +100,16 @@ export const ECOGLOW_BRAND_KIT: BrandKit = {
 };
 
 export const FINEDGE_BRAND_KIT: BrandKit = {
+  id: "finedge",
   brandName: "FinEdge Wealth",
   tagline: "Intelligent Portfolio Management",
   industry: "Fintech / Wealth Management",
+  colors: [
+    { name: "Royal Indigo", hex: "#4338ca", usage: "Primary" },
+    { name: "Cyan Spark", hex: "#06b6d4", usage: "Secondary" },
+    { name: "Crimson Risk", hex: "#dc2626", usage: "Accent" },
+    { name: "Pure White", hex: "#ffffff", usage: "Background" }
+  ],
   primaryRules: [
     {
       id: "FIN-01",
