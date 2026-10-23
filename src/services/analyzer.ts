@@ -17,6 +17,14 @@ export class BrandLensEngine {
     this.brandKit = brandKit;
   }
 
+  public setBrandKit(kit: BrandKit) {
+    this.brandKit = kit;
+  }
+
+  public getBrandKit(): BrandKit {
+    return this.brandKit;
+  }
+
   /**
    * Primary Analysis Method
    */
@@ -77,7 +85,7 @@ export class BrandLensEngine {
   private runDeterministicPass(text: string): ContentFlag[] {
     const flags: ContentFlag[] = [];
 
-    // Check 1: "100% guaranteed"
+    // EcoGlow Check 1: "100% guaranteed"
     const guaranteeMatch = text.match(/100%\s*guaranteed/i);
     if (guaranteeMatch && guaranteeMatch.index !== undefined) {
       flags.push({
@@ -97,7 +105,7 @@ export class BrandLensEngine {
       });
     }
 
-    // Check 2: "cheapest in the world" or superlatives
+    // EcoGlow Check 2: "cheapest in the world" or superlatives
     const cheapestMatch = text.match(/cheapest in the world|lowest price ever|cheapest anywhere/i);
     if (cheapestMatch && cheapestMatch.index !== undefined) {
       flags.push({
@@ -117,7 +125,7 @@ export class BrandLensEngine {
       });
     }
 
-    // Check 3: "save the planet" (Greenwashing / Broad planetary impact)
+    // EcoGlow Check 3: "save the planet" (Greenwashing / Broad planetary impact)
     const savePlanetMatch = text.match(/save the planet|zero environmental footprint|zero harm/i);
     if (savePlanetMatch && savePlanetMatch.index !== undefined) {
       flags.push({
@@ -132,6 +140,46 @@ export class BrandLensEngine {
         severity: "high",
         explanation: 'Under CCPA Guidelines (Oct 2024), broad claims like "save the planet" require verified cradle-to-grave Life Cycle Assessment (LCA) proof.',
         suggestedRewrite: "help reduce environmental impact with verified lower emissions",
+        detectionSource: "deterministic_heuristic",
+        status: "pending"
+      });
+    }
+
+    // FinEdge Check 1: "zero risk"
+    const zeroRiskMatch = text.match(/zero risk|risk-free|zero loss ever/i);
+    if (zeroRiskMatch && zeroRiskMatch.index !== undefined) {
+      flags.push({
+        id: `flag-fin-1-${Date.now()}`,
+        matchedText: zeroRiskMatch[0],
+        startIndex: zeroRiskMatch.index,
+        endIndex: zeroRiskMatch.index + zeroRiskMatch[0].length,
+        ruleId: "FIN-01",
+        ruleTitle: "No Guaranteed Returns or Zero-Risk Claims",
+        policySection: "SEBI Compliance §12(a)",
+        flagType: "contradicted",
+        severity: "high",
+        explanation: 'SEBI Investment Code forbids claiming financial market products carry zero risk.',
+        suggestedRewrite: "systematic risk-managed strategy",
+        detectionSource: "deterministic_heuristic",
+        status: "pending"
+      });
+    }
+
+    // FinEdge Check 2: "guaranteed 25% return" or "double your money"
+    const returnMatch = text.match(/guaranteed 25% return|double your money/i);
+    if (returnMatch && returnMatch.index !== undefined) {
+      flags.push({
+        id: `flag-fin-2-${Date.now()}`,
+        matchedText: returnMatch[0],
+        startIndex: returnMatch.index,
+        endIndex: returnMatch.index + returnMatch[0].length,
+        ruleId: "FIN-01",
+        ruleTitle: "No Guaranteed Returns or Zero-Risk Claims",
+        policySection: "SEBI Compliance §12(a)",
+        flagType: "contradicted",
+        severity: "high",
+        explanation: 'Statutory prohibition against promising fixed speculative returns without authorized prospectuses.',
+        suggestedRewrite: "aims for long-term capital growth",
         detectionSource: "deterministic_heuristic",
         status: "pending"
       });
@@ -213,7 +261,7 @@ Return ONLY a JSON array of objects with schema:
 [
   {
     "matchedText": "exact substring from draft",
-    "ruleId": "exact Rule ID from rules above (e.g. CP-02, CP-04, GW-01, TV-03)",
+    "ruleId": "exact Rule ID from rules above (e.g. CP-02, CP-04, GW-01, TV-03, FIN-01)",
     "ruleTitle": "rule title",
     "policySection": "policy section",
     "flagType": "unverified" | "contradicted" | "tone_voice",
@@ -285,7 +333,6 @@ Return ONLY a JSON array of objects with schema:
   private mergeFlags(detFlags: ContentFlag[], aiFlags: ContentFlag[]): ContentFlag[] {
     const all = [...detFlags];
     for (const af of aiFlags) {
-      // Check if already covered by deterministic flag
       const overlap = all.some(df => 
         (af.startIndex >= df.startIndex && af.startIndex < df.endIndex) ||
         (df.startIndex >= af.startIndex && df.startIndex < af.endIndex)
@@ -294,7 +341,6 @@ Return ONLY a JSON array of objects with schema:
         all.push(af);
       }
     }
-    // Sort chronologically by appearance in text
     return all.sort((a, b) => a.startIndex - b.startIndex);
   }
 
@@ -307,11 +353,10 @@ Return ONLY a JSON array of objects with schema:
     const toneVoice = flags.filter(f => f.flagType === 'tone_voice').length;
     const highRisk = flags.filter(f => f.severity === 'high').length;
 
-    // Penalty scoring algorithm
     let score = 100;
-    score -= contradicted * 30; // heavy penalty for false facts
-    score -= unverified * 15;   // moderate penalty for missing proof
-    score -= toneVoice * 10;    // light penalty for tone issues
+    score -= contradicted * 30;
+    score -= unverified * 15;
+    score -= toneVoice * 10;
     score = Math.max(10, Math.min(100, score));
 
     return {

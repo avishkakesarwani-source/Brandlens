@@ -92,8 +92,58 @@ export const ECOGLOW_BRAND_KIT: BrandKit = {
   }
 };
 
+export const FINEDGE_BRAND_KIT: BrandKit = {
+  brandName: "FinEdge Wealth",
+  tagline: "Intelligent Portfolio Management",
+  industry: "Fintech / Wealth Management",
+  primaryRules: [
+    {
+      id: "FIN-01",
+      policySection: "SEBI Compliance §12(a)",
+      title: "No Guaranteed Returns or Zero-Risk Claims",
+      category: "claims",
+      severity: "high",
+      ruleText: "Investments are subject to market risks. Claiming 'zero risk', 'guaranteed 25% returns', or 'risk-free wealth' is legally prohibited.",
+      rationale: "SEBI Advertising Code 2024 for Registered Investment Advisors."
+    },
+    {
+      id: "FIN-02",
+      policySection: "Financial Disclosures §3",
+      title: "Mandatory Risk Disclaimer Requirement",
+      category: "legal",
+      severity: "high",
+      ruleText: "All promotional materials must carry standard risk disclosure: 'Investments are subject to market risks, read all scheme-related documents carefully.'",
+      rationale: "Statutory mandatory disclaimer."
+    }
+  ],
+  approvedFacts: [
+    {
+      id: "FACT-FIN-01",
+      topic: "Regulatory Registration",
+      statement: "FinEdge is a SEBI-registered Investment Advisory (Reg #INA00018274).",
+      verifiedProofRef: "SEBI Registry Directory 2025"
+    }
+  ],
+  prohibitedSuperlatives: [
+    "guaranteed 25% return",
+    "zero risk",
+    "can never lose money",
+    "double your money"
+  ],
+  approvedClaims: [
+    "Systematic investment strategies tailored to your financial goals.",
+    "Data-driven risk-adjusted portfolio management."
+  ],
+  voiceAndTone: {
+    traits: ["Prudent", "Analytical", "Transparent", "Compliant"],
+    bannedPhrases: ["get rich quick", "secret money glitch", "foolproof jackpot"],
+    guidelines: "We communicate financial risk with absolute clarity and professionalism."
+  }
+};
+
 export interface SampleDraft {
   id: string;
+  brandKey: 'ecoglow' | 'finedge';
   title: string;
   description: string;
   draftText: string;
@@ -103,23 +153,34 @@ export interface SampleDraft {
 export const SAMPLE_DRAFTS: SampleDraft[] = [
   {
     id: "ecoglow-round1",
-    title: "EcoGlow Launch Copy (Round 1 Deck Sample)",
+    brandKey: "ecoglow",
+    title: "⚡ EcoGlow Launch Copy (Slide 5 Demo)",
     description: "Contains absolute guarantee, superlative claim, and ungrounded green claims from Slide 5.",
     draftText: "EcoGlow: Clean the planet, starting today.\n\nOur bottle is 100% guaranteed to save the planet and is the cheapest in the world. Switch now and make your carbon footprint zero overnight!",
     expectedFlagsCount: 3
   },
   {
     id: "clean-copy",
-    title: "Compliant Approved Copy (Clean Benchmark)",
-    description: "Scientifically substantiated text referencing certified facts.",
+    brandKey: "ecoglow",
+    title: "✨ Clean Approved Copy (100% Score)",
+    description: "Scientifically substantiated text referencing certified facts with zero violations.",
     draftText: "EcoGlow: Designed to help reduce environmental impact.\n\nOur bottle is made from 85% certified ocean-bound recycled plastic. Join our mission for sustainable, everyday hydration with verified lower emissions.",
     expectedFlagsCount: 0
   },
   {
     id: "social-influencer",
-    title: "Influencer Ad Pitch (Misleading Claim)",
+    brandKey: "ecoglow",
+    title: "📢 Influencer Ad (Medical Hype Violation)",
     description: "Violates ASCI influencer guidelines with unproven health and superiority claims.",
     draftText: "The revolutionary secret doctors don't want you to know! Our bottle is 100% guaranteed to detoxify your drinking water and is the cheapest in the world.",
     expectedFlagsCount: 3
+  },
+  {
+    id: "finedge-risky",
+    brandKey: "finedge",
+    title: "💳 FinEdge Fintech Promo (SEBI Violation)",
+    description: "Promises guaranteed returns and zero risk, triggering statutory violations.",
+    draftText: "FinEdge Wealth: Double your money in 6 months! Our algorithm is zero risk and offers guaranteed 25% return with zero loss ever.",
+    expectedFlagsCount: 2
   }
 ];

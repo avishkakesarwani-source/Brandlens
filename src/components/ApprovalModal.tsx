@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, ShieldCheck, Copy, Check } from 'lucide-react';
 import type { ApprovalRecord } from '../types';
+import { triggerCelebration, playFeedbackSound } from '../utils/effects';
 
 interface ApprovalModalProps {
   isOpen: boolean;
   onClose: () => void;
   finalContent: string;
   resolvedCount: number;
+  soundEnabled: boolean;
 }
 
 export const ApprovalModal: React.FC<ApprovalModalProps> = ({
@@ -14,6 +16,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
   onClose,
   finalContent,
   resolvedCount,
+  soundEnabled
 }) => {
   const [approverName, setApproverName] = useState('Ayushi Mishra');
   const [approverRole, setApproverRole] = useState<'Brand Manager' | 'Legal Reviewer' | 'Content Lead'>('Brand Manager');
@@ -34,6 +37,12 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
       auditHash: `SHA256-${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 10)}`
     };
     setApprovalRecord(record);
+    
+    // Confetti celebration & triumphant chime!
+    triggerCelebration();
+    if (soundEnabled) {
+      playFeedbackSound('success');
+    }
   };
 
   const handleCopy = () => {
@@ -43,7 +52,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
         
         {/* Header */}
@@ -109,10 +118,10 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
           ) : (
             <div className="space-y-4">
               <div className="text-center py-3">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2">
-                  <CheckCircle className="w-7 h-7" />
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2 shadow-inner">
+                  <CheckCircle className="w-8 h-8" />
                 </div>
-                <h4 className="text-base font-bold text-slate-900">Content Officially Approved</h4>
+                <h4 className="text-lg font-extrabold text-slate-900">Content Officially Approved</h4>
                 <p className="text-xs text-slate-500">Immutable audit record generated for CMS publication</p>
               </div>
 
@@ -165,7 +174,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
               </button>
               <button
                 onClick={handleSignOff}
-                className="text-xs font-bold px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg flex items-center gap-1.5 shadow-sm"
+                className="text-xs font-bold px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg flex items-center gap-1.5 shadow-sm transition-transform active:scale-95"
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Sign & Issue Approval Certificate</span>
