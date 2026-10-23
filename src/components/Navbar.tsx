@@ -41,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 BrandLens
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 uppercase tracking-wider">
-                Round 2 Build
+                Enterprise Ready
               </span>
             </div>
             <p className="text-[11px] text-slate-500 font-medium">Team NovaTech · AI Brand & Claim Verification Gateway</p>
@@ -116,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="text-xs font-semibold text-indigo-700 hover:text-indigo-800 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 flex items-center gap-1.5 transition-colors"
           >
             <Layers className="h-4 w-4 text-indigo-600" />
-            <span>Round 3 Vision</span>
+            <span>Product Roadmap</span>
           </button>
 
           <button

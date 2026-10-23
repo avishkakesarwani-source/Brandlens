@@ -398,11 +398,11 @@ export function App() {
 
       </main>
 
-      {/* Floating Footer Note for Hackathon Judges */}
+      {/* Professional Footer */}
       <footer className="border-t border-slate-200 bg-white py-3 px-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            <strong>TechCircuit Round 2 Submission</strong> — Team NovaTech (Ayushi Mishra, Avishka Kesarwani, Akash, Akshat Kesarwani)
+            <strong>BrandLens</strong> · Pre-Publishing Compliance Gateway · Built by <strong>Team NovaTech</strong>
           </span>
           <div className="flex items-center space-x-4 text-xs">
             <button 
@@ -416,7 +416,7 @@ export function App() {
               onClick={() => setIsRoadmapOpen(true)}
               className="text-indigo-700 hover:underline font-semibold"
             >
-              Round 3 Improvements (15 pts)
+              Enterprise Roadmap & Next Milestones
             </button>
           </div>
         </div>

@@ -21,12 +21,12 @@ export const Round3Modal: React.FC<Round3ModalProps> = ({ isOpen, onClose }) => 
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-lg text-slate-900">Three Major Improvements for Round 3</h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold">
-                  15 Points Rubric
+                <h3 className="font-bold text-lg text-slate-900">Advanced Capabilities & Product Roadmap</h3>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold">
+                  Next Milestones
                 </span>
               </div>
-              <p className="text-xs text-slate-500">Substantial architectural additions moving BrandLens from MVP to Enterprise</p>
+              <p className="text-xs text-slate-500">Upcoming architectural additions scaling BrandLens to enterprise grade</p>
             </div>
           </div>
           <button 
