@@ -13,10 +13,7 @@ import { Round3Modal } from './components/Round3Modal';
 import { ApprovalModal } from './components/ApprovalModal';
 import { ApiSettingsModal } from './components/ApiSettingsModal';
 import { ExportReportModal } from './components/ExportReportModal';
-import { AdVariantComparatorModal } from './components/AdVariantComparatorModal';
-import { RegulatoryRiskRadar } from './components/RegulatoryRiskRadar';
 import { HowToUseGuide } from './components/HowToUseGuide';
-import { SimpleScoreHeader } from './components/SimpleScoreHeader';
 import { defaultEngine } from './services/analyzer';
 import { SAMPLE_DRAFTS, ECOGLOW_BRAND_KIT, FINEDGE_BRAND_KIT } from './data/mockBrandKit';
 import type { SampleDraft } from './data/mockBrandKit';
@@ -30,13 +27,12 @@ export function App() {
   const [originalDraftForDiff, setOriginalDraftForDiff] = useState(SAMPLE_DRAFTS[0].draftText);
   const [summary, setSummary] = useState<AnalysisSummary | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isExpertMode, setIsExpertMode] = useState<boolean>(false);
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'unverified' | 'contradicted' | 'tone' | 'resolved'>('all');
   const [activeView, setActiveView] = useState<'inspect' | 'diff'>('inspect');
   const [activeTab, setActiveTab] = useState<'text' | 'image' | 'analytics' | 'guide'>('text');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Creator');
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabled = true;
   
   // Theme state (Dark / Light mode)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -79,7 +75,6 @@ export function App() {
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [isApiSettingsOpen, setIsApiSettingsOpen] = useState(false);
   const [isExportReportOpen, setIsExportReportOpen] = useState(false);
-  const [isAdComparatorOpen, setIsAdComparatorOpen] = useState(false);
   const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('brandlens_gemini_key') || '');
 
   // Perform initial scan on load
@@ -339,17 +334,9 @@ export function App() {
       <Navbar
         onSelectSample={handleSelectSample}
         onOpenBrandKit={() => setIsBrandKitOpen(true)}
-        onOpenCustomBrandEditor={() => setIsBrandEditorOpen(true)}
-        onOpenRoadmap={() => setIsRoadmapOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
-        onOpenExportReport={() => setIsExportReportOpen(true)}
-        onOpenAdComparator={() => setIsAdComparatorOpen(true)}
-        hasApiKey={Boolean(apiKey)}
-        onToggleApiModal={() => setIsApiSettingsOpen(true)}
         activeBrand={activeBrandKit.brandName}
         onSwitchBrand={handleSwitchBrand}
-        soundEnabled={soundEnabled}
-        onToggleSound={() => setSoundEnabled(!soundEnabled)}
         theme={theme}
         onToggleTheme={toggleTheme}
         activeTab={activeTab}
@@ -361,63 +348,18 @@ export function App() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col">
 
-        {/* Tab 1: Hero Score & Verification Actions */}
+        {/* Unified Compliance Score Gauge & Quick Remediation */}
         {summary && activeTab === 'text' && (
-          !isExpertMode ? (
-            <SimpleScoreHeader
-              summary={summary}
-              allResolved={allResolved}
-              isExpertMode={isExpertMode}
-              onToggleExpertMode={() => setIsExpertMode(true)}
-              onAutoFixAll={handleAutoFixAll}
-              onLoadSample={() => handleSelectSample(SAMPLE_DRAFTS[0])}
-              onOpenApproval={() => setIsApprovalOpen(true)}
-              draftText={draftText}
-              brandKit={activeBrandKit}
-            />
-          ) : (
-            <>
-              {/* Top Banner for Expert Mode with 1-click switch back */}
-              <div className="mb-4 flex items-center justify-between bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-2xl px-5 py-3 shadow-xs">
-                <div className="flex items-center gap-2.5">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600"></span>
-                  </span>
-                  <div>
-                    <span className="text-xs font-black text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
-                      🏢 Expert Audit & Regulatory Compliance Mode
-                    </span>
-                    <span className="text-[11px] text-indigo-700/80 dark:text-indigo-300 ml-2 hidden sm:inline">
-                      Showing ASCI Chapter 1 & SEBI risk matrices, rule codes, and diff inspection
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setIsExpertMode(false)}
-                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <span>Switch to 🟢 Easy Mode</span>
-                </button>
-              </div>
-
-              <ScoreBanner 
-                summary={summary} 
-                allResolved={allResolved} 
-                activeView={activeView}
-                onChangeView={setActiveView}
-              />
-
-              {/* Real-Time Regulatory & Legal Intelligence Radar */}
-              <RegulatoryRiskRadar
-                summary={summary}
-                draftText={draftText}
-                brandKit={activeBrandKit}
-                allResolved={allResolved}
-              />
-            </>
-          )
+          <ScoreBanner 
+            summary={summary} 
+            allResolved={allResolved} 
+            activeView={activeView}
+            onChangeView={setActiveView}
+            onAutoFixAll={handleAutoFixAll}
+            onOpenApproval={() => setIsApprovalOpen(true)}
+            draftText={draftText}
+            brandName={activeBrandKit.brandName}
+          />
         )}
 
         {/* Tab 1: Text & Word/PDF Document Analysis */}
@@ -511,7 +453,6 @@ export function App() {
                         flag={flag}
                         isSelected={selectedFlagId === flag.id}
                         currentUserRole={currentUserRole}
-                        isExpertMode={isExpertMode}
                         onSelect={() => setSelectedFlagId(flag.id)}
                         onAcceptRewrite={handleAcceptRewrite}
                         onRejectFlag={handleRejectFlag}
@@ -601,7 +542,6 @@ export function App() {
             onGoToImageStudio={() => setActiveTab('image')}
             onGoToAnalytics={() => setActiveTab('analytics')}
             onLoadDemoDraft={() => handleSelectSample(SAMPLE_DRAFTS[0])}
-            onOpenAdComparator={() => setIsAdComparatorOpen(true)}
             onOpenExportReport={() => setIsExportReportOpen(true)}
           />
         )}
@@ -683,16 +623,6 @@ export function App() {
         summary={summary}
         draftText={draftText}
         versions={versions}
-      />
-
-      <AdVariantComparatorModal
-        isOpen={isAdComparatorOpen}
-        onClose={() => setIsAdComparatorOpen(false)}
-        brandKit={activeBrandKit}
-        onApplyVariant={(chosenText) => {
-          setDraftText(chosenText);
-          runAnalysis(chosenText, activeBrandKit);
-        }}
       />
 
       <ApiSettingsModal

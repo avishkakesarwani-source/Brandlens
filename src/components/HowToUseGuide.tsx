@@ -20,7 +20,6 @@ interface HowToUseGuideProps {
   onGoToImageStudio: () => void;
   onGoToAnalytics: () => void;
   onLoadDemoDraft: () => void;
-  onOpenAdComparator: () => void;
   onOpenExportReport: () => void;
 }
 
@@ -30,7 +29,6 @@ export const HowToUseGuide: React.FC<HowToUseGuideProps> = ({
   onGoToImageStudio,
   onGoToAnalytics,
   onLoadDemoDraft,
-  onOpenAdComparator,
   onOpenExportReport
 }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -59,7 +57,7 @@ export const HowToUseGuide: React.FC<HowToUseGuideProps> = ({
       badge: "Real-Time Scan",
       icon: <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />,
       color: "from-indigo-500/10 to-blue-500/10 border-indigo-200 dark:border-indigo-800",
-      description: "BrandLens instantly cross-references every factual statement against registered approved brand facts and ASCI/SEBI advertising regulations:",
+      description: "BrandLens instantly cross-references every factual statement against registered approved brand facts and advertising regulations:",
       subPoints: [
         { label: "Proven Fact (Green)", text: "Substantiated with lab certification data in the active Brand Kit." },
         { label: "No Proof Found (Amber)", text: "Unsubstantiated superlative or claim that risks legal scrutiny." },
@@ -104,15 +102,9 @@ export const HowToUseGuide: React.FC<HowToUseGuideProps> = ({
       onClick: onGoToAnalytics
     },
     {
-      title: "⚡ A/B Ad Variant Split-Tester",
-      desc: "Compare two ad copy variations side-by-side. Scores both simultaneously so growth marketers know which variant is 100% compliant before spending ad budget.",
-      btnText: "Open A/B Split-Tester",
-      onClick: onOpenAdComparator
-    },
-    {
       title: "📄 Official Compliance Audit Export",
       desc: "Download formatted Markdown reports or trigger 1-click print-to-PDF certificates complete with SHA-256 validation stamps for agencies and brand legal teams.",
-      btnText: "Open Export Modal",
+      btnText: "Export Report",
       onClick: onOpenExportReport
     }
   ];
