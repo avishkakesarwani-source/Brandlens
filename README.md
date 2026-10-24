@@ -99,9 +99,25 @@ In our Round 1 proposal, we pledged to test BrandLens against 20 sample pieces c
 ## 💻 Tech Stack
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons
+- **Backend & REST API:** Node.js, Express, REST Architecture, Vercel Serverless Functions (`/api/*`)
 - **AI & Grounding:** Google Gemini API (`@google/genai`), Custom Grounding Filter
+- **Security & Cryptography:** Web Crypto API (SHA-256), Regex PII Masking, DoS Payload Guard
 - **Styling & Design System:** Tailored Inkloom color tokens (Teal, Deep Navy, Warm Off-White)
-- **Deployment:** Vercel / Netlify (Zero cold starts, instant public access)
+- **Deployment:** Vercel (Edge network, instant serverless endpoints, zero cold start)
+
+---
+
+## 🔌 Backend REST API Endpoints
+
+The project includes an enterprise **Node.js Express REST Backend** (`server/server.js`) that also runs serverless on Vercel:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | System health check, Node.js runtime stats, uptime, and engine status |
+| `GET` | `/api/brand-kits` | Governed Brand Kit rules, certified facts, and banned superlatives |
+| `POST` | `/api/analyze` | Hybrid backend analysis pipeline with server-side SHA-256 seal |
+| `POST` | `/api/audit-logs` | Cryptographic publication approval and audit certificate creation |
+| `GET` | `/api/audit-logs` | Tamper-evident audit logs and verified certificate history |
 
 ---
 
@@ -109,14 +125,17 @@ In our Round 1 proposal, we pledged to test BrandLens against 20 sample pieces c
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/NovaTech/brandlens.git
-cd brandlens
+git clone https://github.com/avishkakesarwani-source/Brandlens.git
+cd Brandlens
 
 # 2. Install dependencies
 npm install
 
-# 3. Start local development server
+# 3. Start Frontend Client (Vite Dev Server)
 npm run dev
+
+# 4. (Optional) Start Node.js Express Backend Server (Port 5000)
+npm run server
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
