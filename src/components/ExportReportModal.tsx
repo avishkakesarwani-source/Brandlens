@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Download, Printer, Copy, Check, ShieldCheck, CheckCircle2, AlertTriangle, FileText } from 'lucide-react';
 import type { AnalysisSummary, BrandKit, ContentVersion } from '../types';
+import { computeSha256 } from '../utils/security';
 
 interface ExportReportModalProps {
   isOpen: boolean;
@@ -20,6 +21,13 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
   versions
 }) => {
   const [copied, setCopied] = useState(false);
+  const [sha256Hash, setSha256Hash] = useState<string>('Computing cryptographic hash...');
+
+  useEffect(() => {
+    if (isOpen && draftText) {
+      computeSha256(draftText).then(hash => setSha256Hash(hash));
+    }
+  }, [isOpen, draftText]);
 
   if (!isOpen) return null;
 
@@ -32,7 +40,6 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
     hour: '2-digit',
     minute: '2-digit'
   });
-  const mockSha256 = "b7a9f4c3d2e185a0c6d4821e8e45f912a73b8c9d0e1f2a3b4c5d6e7f8a9b0c1d";
 
   const generateMarkdownReport = (): string => {
     return `# BrandLens Enterprise Compliance Audit Report
@@ -41,7 +48,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
 **Audit Date:** ${reportDate}
 **Compliance Status:** ${isApproved ? 'APPROVED FOR PUBLICATION' : 'REQUIRES REVISION'}
 **Overall Score:** ${score}/100
-**Verification Hash (SHA-256):** \`${mockSha256}\`
+**Verification Hash (SHA-256):** \`${sha256Hash}\`
 
 ---
 
@@ -152,7 +159,7 @@ ${summary && summary.flags.length > 0 ? summary.flags.map((f, i) => `
                   {brandKit.brandName} Marketing Compliance Audit
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  SHA-256: <code className="text-[11px] font-mono text-slate-700 dark:text-slate-300">{mockSha256.slice(0, 24)}...</code>
+                  SHA-256: <code className="text-[11px] font-mono text-slate-700 dark:text-slate-300">{sha256Hash.slice(0, 24)}...</code>
                 </p>
               </div>
             </div>

@@ -102,6 +102,12 @@ export const HowToUseGuide: React.FC<HowToUseGuideProps> = ({
       onClick: onGoToAnalytics
     },
     {
+      title: "🛡️ Cybersecurity & PII Redaction Shield",
+      desc: "Built-in client-side privacy guard that masks phone numbers, emails, and secret API keys with 1-click before AI processing, with tamper-evident Web Crypto SHA-256 verification seals.",
+      btnText: "Open Draft Workspace",
+      onClick: onGoToDraftChecker
+    },
+    {
       title: "📄 Official Compliance Audit Export",
       desc: "Download formatted Markdown reports or trigger 1-click print-to-PDF certificates complete with SHA-256 validation stamps for agencies and brand legal teams.",
       btnText: "Export Report",
@@ -111,15 +117,19 @@ export const HowToUseGuide: React.FC<HowToUseGuideProps> = ({
 
   const faqs = [
     {
+      q: "How does BrandLens protect user privacy and cybersecurity?",
+      a: "BrandLens implements enterprise-grade cybersecurity: (1) 1-click PII & secret key masking before AI processing, (2) 100% in-browser client-side execution with zero cloud storage of draft texts, (3) strict 10MB file upload limits to prevent DoS attacks, (4) HTML sanitization against XSS payloads, and (5) cryptographic SHA-256 hashing via native Web Crypto API for non-repudiation."
+    },
+    {
       q: "Does BrandLens work without an internet connection or Gemini API key?",
       a: "Yes! BrandLens is built with an offline-capable deterministic heuristic engine that runs with zero latency directly in your browser. Adding a Google Gemini API key unlocks dynamic contextual scans, but the core workflow is 100% functional without it."
     },
     {
-      q: "Can I use BrandLens for a brand other than EcoGlow or FinEdge?",
-      a: "Absolutely! Open 'More Tools' in the header and click '+ Create Brand Kit for Any Brand'. You can configure custom brand rules, approved facts, hex color codes, and banned superlatives for any company."
+      q: "Can I inspect the active brand policies and certified facts?",
+      a: "Absolutely! Click 'Brand Kit' in the top navigation bar to inspect registered rules, certified scientific facts, prohibited superlatives, and official brand tone guidelines for EcoGlow or FinEdge."
     },
     {
-      q: "Are my uploaded Word (.docx) and PDF files uploaded to an external server?",
+      q: "Are my uploaded Word (.docx) and PDF files sent to an external server?",
       a: "No. All document parsing is handled 100% client-side inside your browser using WebAssembly and Web Workers (mammoth.js for Word and pdfjs-dist for PDF). No draft content ever leaves your machine."
     },
     {

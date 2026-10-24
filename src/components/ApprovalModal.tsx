@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckCircle, ShieldCheck, Copy, Check, RotateCcw } from 'lucide-react';
 import type { ApprovalRecord, UserRole } from '../types';
 import { triggerCelebration, playFeedbackSound } from '../utils/effects';
+import { computeSha256 } from '../utils/security';
 
 interface ApprovalModalProps {
   isOpen: boolean;
@@ -28,7 +29,8 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSignOff = (status: 'approved' | 'changes_requested') => {
+  const handleSignOff = async (status: 'approved' | 'changes_requested') => {
+    const realSha256 = await computeSha256(finalContent);
     const record: ApprovalRecord = {
       id: `APPR-${Math.floor(100000 + Math.random() * 900000)}`,
       version: 1.2,
@@ -37,7 +39,7 @@ export const ApprovalModal: React.FC<ApprovalModalProps> = ({
       timestamp: new Date().toLocaleString(),
       finalContent,
       resolvedFlagsCount: resolvedCount,
-      auditHash: `SHA256-${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 10)}`,
+      auditHash: realSha256,
       status,
       managerFeedback: managerNotes
     };

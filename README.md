@@ -2,7 +2,7 @@
 > **TechCircuit Round 2: The Build** · Team **NovaTech**  
 > *Ayushi Mishra (Team Leader, AI) · Avishka Kesarwani (Backend) · Akash (Testing & Documentation) · Akshat Kesarwani (Frontend)*
 
-[![Live Demo](https://img.shields.io/badge/Demo-Live%20Sandbox-0d9488?style=for-the-badge)](http://localhost:5173)
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20Vercel%20App-0d9488?style=for-the-badge)](https://brandlens-two.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 [![Round 2 Submission](https://img.shields.io/badge/TechCircuit-Round%202%20Submission-indigo?style=for-the-badge)](#)
 
@@ -27,7 +27,8 @@ Wrong or off-brand content gets published because traditional grammar checkers o
 | **🔍 Hybrid Detection Engine** | Multi-tier scanning: instant deterministic regex for prohibited buzzwords + Google Gemini structured LLM evaluation. | ✅ Complete |
 | **🛡️ Grounding & Anti-Hallucination Filter** | Every flag must cite an authentic Rule ID from the active Brand Kit; hallucinated flags are automatically stripped before reaching the UI. | ✅ Complete |
 | **⚖️ "Unverified is Not False" Classifier** | Distinguishes between **Contradicted Facts** (false claims) and **Unverified Claims** (lacking proof in database) to help legal teams prioritize. | ✅ Complete |
-| **✏️ Interactive Inline Review** | Clickable in-text highlight markers, rule citation inspector, and 1-click AI rewrite adoption (`Accept`, `Custom Edit`, `Dismiss`). | ✅ Complete |
+| **🔒 Enterprise Cybersecurity & PII Guard** | 1-click PII redaction (phones, emails, secret keys), strict 10MB DoS protection, XSS sanitization, and native Web Crypto SHA-256 seals. | ✅ Complete |
+| **⚡ 1-Click Auto-Fix & Tone Tuner** | Apply approved AI rewrites simultaneously or choose from 3 tones (*Factual*, *Bold*, *Honest*) with instant live preview. | ✅ Complete |
 | **📋 Manager Sign-Off & Audit Log** | Formal human-in-the-loop gatekeeper generating a cryptographic audit hash and certified publication certificate. | ✅ Complete |
 | **📖 Brand Kit Repository** | Governed database containing Brand Rules, Claims Policies, Approved Facts, and Voice & Tone guidelines. | ✅ Complete |
 

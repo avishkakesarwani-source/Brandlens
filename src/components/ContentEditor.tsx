@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import type { ContentFlag } from '../types';
-import { RefreshCw, Copy, Check, Wand2, Sparkles, Upload, FileText, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Copy, Check, Wand2, Sparkles, Upload, FileText, CheckCircle2, Shield, X } from 'lucide-react';
 import { parseUploadedFile } from '../utils/fileParser';
+import { maskSensitiveData } from '../utils/security';
 
 interface ContentEditorProps {
   draftText: string;
@@ -30,8 +31,27 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
   const [isRawEdit, setIsRawEdit] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [isParsingFile, setIsParsingFile] = useState(false);
+  const [piiAlert, setPiiAlert] = useState<{ message: string; count: number } | null>(null);
 
   const pendingFlags = flags.filter(f => f.status === 'pending');
+
+  const handleMaskPii = () => {
+    const result = maskSensitiveData(draftText);
+    if (result.maskedCount > 0) {
+      onChangeText(result.cleanedText);
+      setPiiAlert({
+        message: `Protected ${result.maskedCount} sensitive item(s) (${result.detectedTypes.join(', ')}). Redacted before processing.`,
+        count: result.maskedCount
+      });
+      onReanalyze();
+    } else {
+      setPiiAlert({
+        message: 'No private data or secret keys detected. Content is safe & clear.',
+        count: 0
+      });
+    }
+    setTimeout(() => setPiiAlert(null), 4500);
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(draftText);
@@ -189,6 +209,17 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             </button>
           )}
 
+          {/* Slide 8: Privacy Redaction Shield */}
+          <button
+            onClick={handleMaskPii}
+            className="text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 flex items-center gap-1.5 transition-colors cursor-pointer"
+            title="Slide 8 Privacy Guard: Redact phone numbers, emails, API keys & credit cards before processing"
+          >
+            <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="hidden sm:inline">Mask PII</span>
+            <span className="sm:hidden">PII</span>
+          </button>
+
           <button
             onClick={() => setIsRawEdit(!isRawEdit)}
             className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors"
@@ -215,6 +246,26 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           </button>
         </div>
       </div>
+
+      {/* PII Protection Notification Banner */}
+      {piiAlert && (
+        <div className={`px-5 py-2.5 border-b text-xs font-semibold flex items-center justify-between animate-in slide-in-from-top-1 ${
+          piiAlert.count > 0 
+            ? 'bg-indigo-50 dark:bg-indigo-950/80 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200' 
+            : 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+        }`}>
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <span>{piiAlert.message}</span>
+          </div>
+          <button 
+            onClick={() => setPiiAlert(null)}
+            className="p-1 rounded-md hover:bg-slate-200/50 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Editor Content Area */}
       <div className="p-6 flex-1 overflow-y-auto min-h-[380px] bg-white dark:bg-slate-900 transition-colors">

@@ -1,27 +1,33 @@
 import mammoth from 'mammoth';
+import { validateUploadedFile, sanitizeInput } from './security';
 
 /**
- * Extracts plain text from uploaded files: .txt, .docx, .pdf
+ * Safely extracts sanitized plain text from uploaded files: .txt, .docx, .pdf
+ * Enforces file size limits (max 10MB) and strips malicious payloads.
  */
 export async function parseUploadedFile(file: File): Promise<{ text: string; fileName: string }> {
+  // Step 1: Security validation
+  const validation = validateUploadedFile(file);
+  if (!validation.valid) {
+    throw new Error(validation.error || "File security validation failed.");
+  }
+
   const extension = file.name.split('.').pop()?.toLowerCase();
 
   if (extension === 'txt') {
-    const text = await file.text();
-    return { text, fileName: file.name };
+    const rawText = await file.text();
+    return { text: sanitizeInput(rawText), fileName: file.name };
   }
 
   if (extension === 'docx') {
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.extractRawText({ arrayBuffer });
-    return { text: result.value, fileName: file.name };
+    return { text: sanitizeInput(result.value), fileName: file.name };
   }
 
   if (extension === 'pdf') {
     try {
-      // Dynamic import of pdfjs-dist for browser compatibility
       const pdfjs = await import('pdfjs-dist');
-      // Set worker source
       pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
       const arrayBuffer = await file.arrayBuffer();
@@ -38,16 +44,15 @@ export async function parseUploadedFile(file: File): Promise<{ text: string; fil
         fullText += pageText + '\n\n';
       }
 
-      return { text: fullText.trim(), fileName: file.name };
+      return { text: sanitizeInput(fullText.trim()), fileName: file.name };
     } catch (err) {
-      console.warn("PDF extraction fallback via text stream:", err);
-      // Fallback simple string extraction for text stream
+      console.warn("PDF extraction fallback via sanitized text stream:", err);
       const text = await file.text();
-      // Filter out non-printable characters
       const clean = text.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ');
-      return { text: clean.length > 50 ? clean : "EcoGlow: Clean the planet, starting today.\nOur bottle is 100% guaranteed to save the planet and is the cheapest in the world.", fileName: file.name };
+      const fallback = clean.length > 50 ? clean : "EcoGlow: Clean the planet, starting today.\nOur bottle is 100% guaranteed to save the planet and is the cheapest in the world.";
+      return { text: sanitizeInput(fallback), fileName: file.name };
     }
   }
 
-  throw new Error(`Unsupported file type .${extension}. Please upload a .txt, .docx, or .pdf file.`);
+  throw new Error(`Unsupported file type .${extension}. Please upload a verified .txt, .docx, or .pdf file.`);
 }
