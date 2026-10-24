@@ -14,6 +14,7 @@ import { ApprovalModal } from './components/ApprovalModal';
 import { ApiSettingsModal } from './components/ApiSettingsModal';
 import { ExportReportModal } from './components/ExportReportModal';
 import { HowToUseGuide } from './components/HowToUseGuide';
+import { AuthScreen, type UserProfile } from './components/AuthScreen';
 import { defaultEngine } from './services/analyzer';
 import { SAMPLE_DRAFTS, ECOGLOW_BRAND_KIT, FINEDGE_BRAND_KIT } from './data/mockBrandKit';
 import type { SampleDraft } from './data/mockBrandKit';
@@ -33,6 +34,26 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'text' | 'image' | 'analytics' | 'guide'>('text');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Creator');
   const soundEnabled = true;
+
+  // Persistent User Session
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem('brandlens_user');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { return null; }
+    }
+    return null; // Prompt login on first visit!
+  });
+
+  const handleLogin = (user: UserProfile) => {
+    setCurrentUser(user);
+    setCurrentUserRole(user.role);
+    localStorage.setItem('brandlens_user', JSON.stringify(user));
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('brandlens_user');
+  };
   
   // Theme state (Dark / Light mode)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -327,6 +348,11 @@ export function App() {
     return true; // 'all'
   }) : [];
 
+  // Gate with AuthScreen if user has not signed in
+  if (!currentUser) {
+    return <AuthScreen onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#faf8f5] dark:bg-slate-950 flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors">
       
@@ -343,10 +369,86 @@ export function App() {
         onSelectTab={setActiveTab}
         currentUserRole={currentUserRole}
         onChangeUserRole={setCurrentUserRole}
+        user={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col">
+
+        {/* ====== LINEAR WORKFLOW PROGRESS BAR ====== */}
+        {activeTab === 'text' && (
+          <div className="mb-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3 shadow-xs flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              
+              {/* Step 1 */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs ${
+                  draftText.trim().length > 0 
+                    ? 'bg-teal-500 text-slate-950 shadow-sm shadow-teal-500/20' 
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                }`}>
+                  1
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Draft Input</div>
+                  <div className="text-[10px] text-slate-400 hidden sm:block">Write, paste, or upload ad copy</div>
+                </div>
+              </div>
+
+              <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-700 shrink-0" />
+
+              {/* Step 2 */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs ${
+                  summary && pendingFlags.length > 0
+                    ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/20'
+                    : summary && allResolved
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                }`}>
+                  2
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Review & Fix</div>
+                  <div className="text-[10px] text-slate-400 hidden sm:block">
+                    {summary ? `${pendingFlags.length} claim issues remaining` : 'Awaiting content scan'}
+                  </div>
+                </div>
+              </div>
+
+              <ArrowRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-700 shrink-0" />
+
+              {/* Step 3 */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs ${
+                  allResolved || (summary && summary.flags.length === 0)
+                    ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20 animate-bounce'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                }`}>
+                  3
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Approval & Seal</div>
+                  <div className="text-[10px] text-slate-400 hidden sm:block">
+                    {allResolved ? 'Ready for manager sign-off' : 'Requires clean review'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Demo Inspiration Button */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleSelectSample(SAMPLE_DRAFTS[0])}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                <span>⚡ Load Demo Copy</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Unified Compliance Score Gauge & Quick Remediation */}
         {summary && activeTab === 'text' && (
@@ -369,7 +471,7 @@ export function App() {
             <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 pl-1">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                <span>Test Formats:</span>
+                <span>Sample Formats (click to load):</span>
               </span>
               {SAMPLE_DRAFTS.map((sample) => {
                 const isSelected = draftText === sample.draftText;
@@ -397,12 +499,15 @@ export function App() {
               
               {/* Left Pane: Interactive Document & Highlighting (7 cols) */}
               <div className="lg:col-span-7 flex flex-col h-full min-h-[500px]">
-                <div className="mb-2 flex items-center justify-between text-xs text-slate-500 font-medium">
-                  <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-[11px] font-bold">1</span>
-                    Step 1: Check Marketing Copy
+                <div className="mb-2 flex items-center justify-between text-xs font-medium">
+                  <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                    <span className="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-[11px] font-black shadow-sm">1</span>
+                    <span>Marketing Draft &amp; Input</span>
                   </span>
-                  <span className="text-slate-400 text-[11px]">Click any highlighted word to inspect</span>
+                  <span className="text-slate-400 text-[11px] hidden sm:flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
+                    <span>Colored highlights indicate ungrounded or risky claims</span>
+                  </span>
                 </div>
 
                 <ContentEditor
@@ -421,7 +526,7 @@ export function App() {
               {/* Right Pane: Issues, Citations & Suggested Rewrites (5 cols) */}
               <div className="lg:col-span-5 flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                 
-                {/* Filter Bar with Friendly Step Indicator */}
+                {/* Filter Bar with Clean Step Indicator */}
                 <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
                   <div className="flex items-center space-x-1 overflow-x-auto">
                     <button
@@ -466,10 +571,13 @@ export function App() {
                     </button>
                   </div>
 
-                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                    <span className="w-4 h-4 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 flex items-center justify-center text-[10px] font-bold">2</span>
-                    Step 2: Fix
-                  </span>
+                  <div className="flex flex-col items-end shrink-0">
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                      <span className="w-5 h-5 rounded-full bg-teal-600 text-white flex items-center justify-center text-[10px] font-black">2</span>
+                      Review &amp; Fix
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Click "Accept Fix"</span>
+                  </div>
                 </div>
 
                 {/* Cards List */}
@@ -505,16 +613,27 @@ export function App() {
                 </div>
 
                 {/* Bottom Approval Action Bar with Step 3 */}
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/80 flex items-center justify-between">
+                <div className={`p-4 border-t flex items-center justify-between transition-colors ${
+                  allResolved
+                    ? 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800'
+                    : 'bg-slate-50/90 dark:bg-slate-800/80 border-slate-200 dark:border-slate-800'
+                }`}>
                   <div>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                      <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center text-[10px] font-bold">3</span>
-                      <span>{allResolved ? "Step 3: Ready for Sign-Off" : `${pendingFlags.length} action${pendingFlags.length === 1 ? '' : 's'} remaining`}</span>
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+                        allResolved
+                          ? 'bg-emerald-600 text-white animate-bounce'
+                          : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}>3</span>
+                      <span>{allResolved
+                        ? '🎉 All Claims Verified & Clean!'
+                        : `${pendingFlags.length} action${pendingFlags.length === 1 ? '' : 's'} remaining`
+                      }</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {allResolved 
-                        ? "Generate official approval certificate" 
-                        : "Click 'Accept Fix' on cards above"}
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 ml-6">
+                      {allResolved
+                        ? 'Ready for Manager Approval & SHA-256 seal'
+                        : 'Review issues above or click "Auto-Fix All"'}
                     </p>
                   </div>
 

@@ -10,7 +10,8 @@ import {
   HelpCircle,
   Moon,
   Sun,
-  Lock
+  Lock,
+  LogOut
 } from 'lucide-react';
 import type { SampleDraft } from '../data/mockBrandKit';
 import type { UserRole } from '../types';
@@ -28,6 +29,8 @@ interface NavbarProps {
   onSelectTab: (tab: 'text' | 'image' | 'analytics' | 'guide') => void;
   currentUserRole: UserRole;
   onChangeUserRole: (role: UserRole) => void;
+  user?: import('./AuthScreen').UserProfile | null;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -41,7 +44,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   onSelectTab,
   currentUserRole,
-  onChangeUserRole
+  onChangeUserRole,
+  user,
+  onLogout
 }) => {
   return (
     <header className="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 shadow-xs transition-colors">
@@ -71,17 +76,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => onSelectTab('text')}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
+              title="Ad copy paste karo, AI se check karo, fix karo"
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all ${
                 activeTab === 'text'
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Draft Checker
+              <span>✍️</span>
+              <span>Draft Checker</span>
             </button>
 
             <button
               onClick={() => onSelectTab('image')}
+              title="Image ya logo upload karo brand compliance check karo"
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
                 activeTab === 'image'
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
@@ -94,6 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => onSelectTab('analytics')}
+              title="Brand ke rules aur guidelines dekhein"
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
                 activeTab === 'analytics'
                   ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
@@ -107,6 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => onSelectTab('guide')}
+              title="Pehli baar? Yahan se shuru karo — step-by-step guide"
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
                 activeTab === 'guide'
                   ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs'
@@ -183,19 +193,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>History</span>
           </button>
 
-          {/* Role Selector (Slide 8: Roles) */}
-          <div className="hidden sm:flex items-center space-x-1 text-xs bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
-            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <select
-              value={currentUserRole}
-              onChange={(e) => onChangeUserRole(e.target.value as any)}
-              className="bg-transparent font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
-            >
-              <option value="Creator" className="dark:bg-slate-900">Creator</option>
-              <option value="Brand Manager" className="dark:bg-slate-900">Manager</option>
-              <option value="Reviewer" className="dark:bg-slate-900">Legal</option>
-            </select>
-          </div>
+          {/* User Account / Role Badge */}
+          {user ? (
+            <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="w-6 h-6 rounded-lg bg-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                {user.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              <div className="hidden sm:flex flex-col text-left pl-0.5 pr-1">
+                <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                  {user.name.split(' ')[0]}
+                </span>
+                <span className="text-[9px] font-semibold text-teal-600 dark:text-teal-400 leading-tight">
+                  {user.role}
+                </span>
+              </div>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  title="Switch User / Logout"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            /* Fallback Role Selector */
+            <div className="hidden sm:flex items-center space-x-1 text-xs bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+              <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <select
+                value={currentUserRole}
+                onChange={(e) => onChangeUserRole(e.target.value as any)}
+                className="bg-transparent font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+              >
+                <option value="Creator" className="dark:bg-slate-900">Creator</option>
+                <option value="Brand Manager" className="dark:bg-slate-900">Manager</option>
+                <option value="Reviewer" className="dark:bg-slate-900">Legal</option>
+              </select>
+            </div>
+          )}
 
           {/* Dark Mode Toggle */}
           <button
