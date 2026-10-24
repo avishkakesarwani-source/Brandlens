@@ -18,6 +18,7 @@ interface IssueCardProps {
   flag: ContentFlag;
   isSelected: boolean;
   currentUserRole: UserRole;
+  isExpertMode?: boolean;
   onSelect: () => void;
   onAcceptRewrite: (flagId: string, rewrite: string) => void;
   onRejectFlag: (flagId: string) => void;
@@ -30,6 +31,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   flag,
   isSelected,
   currentUserRole,
+  isExpertMode = false,
   onSelect,
   onAcceptRewrite,
   onRejectFlag,
@@ -94,9 +96,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({
       <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/60">
         <div className="flex items-center space-x-2">
           {renderClaimStatusBadge()}
-          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
-            {flag.severity} Severity
-          </span>
+          {isExpertMode && (
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+              {flag.severity} Severity
+            </span>
+          )}
         </div>
 
         {/* Status chip if resolved */}
@@ -108,7 +112,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           }`}>
             {flag.status === 'accepted' && <><CheckCircle2 className="w-3.5 h-3.5" /> Replaced</>}
             {flag.status === 'custom_edited' && <><Edit3 className="w-3.5 h-3.5" /> Custom Edit</>}
-            {flag.status === 'rejected' && 'Overruled'}
+            {flag.status === 'rejected' && (isExpertMode ? 'Overruled' : 'Kept Original')}
           </span>
         )}
       </div>
@@ -118,18 +122,18 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         {/* Flagged quote */}
         <div>
           <div className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider mb-1">
-            Flagged Excerpt in Draft
+            {isExpertMode ? "Flagged Excerpt in Draft" : "Flagged in your text"}
           </div>
           <div className="text-sm font-semibold text-rose-900 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/60 px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900 inline-block font-mono">
             "{flag.matchedText}"
           </div>
         </div>
 
-        {/* Rule citation */}
+        {/* Rule citation / explanation */}
         <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60 text-xs text-slate-700 dark:text-slate-300">
           <div className="flex items-center gap-1 font-bold text-slate-900 dark:text-white mb-0.5">
             <Info className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 flex-shrink-0" />
-            <span>Rule Broken: {flag.policySection} — {flag.ruleTitle}</span>
+            <span>{isExpertMode ? `Rule Broken: ${flag.policySection} — ${flag.ruleTitle}` : 'Why this needs fixing:'}</span>
           </div>
           <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed mt-1">
             {flag.explanation}
@@ -256,9 +260,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 e.stopPropagation();
                 onRejectFlag(flag.id);
               }}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-2 py-1 rounded font-medium transition-colors"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-2.5 py-1 rounded font-medium transition-colors"
+              title={isExpertMode ? "Overrule flag and preserve original" : "Keep original draft without changes"}
             >
-              Overrule
+              {isExpertMode ? "Overrule" : "Keep Original"}
             </button>
 
             <button
@@ -266,7 +271,8 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 e.stopPropagation();
                 setIsEditing(true);
               }}
-              className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium flex items-center gap-1 transition-colors"
+              className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium flex items-center gap-1 transition-colors"
+              title="Manually customize this rewrite"
             >
               <Edit3 className="w-3 h-3" />
               <span>Edit</span>
@@ -278,6 +284,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 onAcceptRewrite(flag.id, flag.suggestedRewrite);
               }}
               className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm transition-transform active:scale-95"
+              title="Replace flagged phrase with verified compliant rewrite"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Accept Fix</span>

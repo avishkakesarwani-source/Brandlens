@@ -16,6 +16,7 @@ import { ExportReportModal } from './components/ExportReportModal';
 import { AdVariantComparatorModal } from './components/AdVariantComparatorModal';
 import { RegulatoryRiskRadar } from './components/RegulatoryRiskRadar';
 import { HowToUseGuide } from './components/HowToUseGuide';
+import { SimpleScoreHeader } from './components/SimpleScoreHeader';
 import { defaultEngine } from './services/analyzer';
 import { SAMPLE_DRAFTS, ECOGLOW_BRAND_KIT, FINEDGE_BRAND_KIT } from './data/mockBrandKit';
 import type { SampleDraft } from './data/mockBrandKit';
@@ -29,6 +30,7 @@ export function App() {
   const [originalDraftForDiff, setOriginalDraftForDiff] = useState(SAMPLE_DRAFTS[0].draftText);
   const [summary, setSummary] = useState<AnalysisSummary | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isExpertMode, setIsExpertMode] = useState<boolean>(false);
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'unverified' | 'contradicted' | 'tone' | 'resolved'>('all');
   const [activeView, setActiveView] = useState<'inspect' | 'diff'>('inspect');
@@ -359,24 +361,63 @@ export function App() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col">
 
-        {/* Compliance Score Gauge & Health Chips */}
+        {/* Tab 1: Hero Score & Verification Actions */}
         {summary && activeTab === 'text' && (
-          <>
-            <ScoreBanner 
-              summary={summary} 
-              allResolved={allResolved} 
-              activeView={activeView}
-              onChangeView={setActiveView}
-            />
-
-            {/* Real-Time Regulatory & Legal Intelligence Radar */}
-            <RegulatoryRiskRadar
+          !isExpertMode ? (
+            <SimpleScoreHeader
               summary={summary}
+              allResolved={allResolved}
+              isExpertMode={isExpertMode}
+              onToggleExpertMode={() => setIsExpertMode(true)}
+              onAutoFixAll={handleAutoFixAll}
+              onLoadSample={() => handleSelectSample(SAMPLE_DRAFTS[0])}
+              onOpenApproval={() => setIsApprovalOpen(true)}
               draftText={draftText}
               brandKit={activeBrandKit}
-              allResolved={allResolved}
             />
-          </>
+          ) : (
+            <>
+              {/* Top Banner for Expert Mode with 1-click switch back */}
+              <div className="mb-4 flex items-center justify-between bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-2xl px-5 py-3 shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600"></span>
+                  </span>
+                  <div>
+                    <span className="text-xs font-black text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
+                      🏢 Expert Audit & Regulatory Compliance Mode
+                    </span>
+                    <span className="text-[11px] text-indigo-700/80 dark:text-indigo-300 ml-2 hidden sm:inline">
+                      Showing ASCI Chapter 1 & SEBI risk matrices, rule codes, and diff inspection
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsExpertMode(false)}
+                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <span>Switch to 🟢 Easy Mode</span>
+                </button>
+              </div>
+
+              <ScoreBanner 
+                summary={summary} 
+                allResolved={allResolved} 
+                activeView={activeView}
+                onChangeView={setActiveView}
+              />
+
+              {/* Real-Time Regulatory & Legal Intelligence Radar */}
+              <RegulatoryRiskRadar
+                summary={summary}
+                draftText={draftText}
+                brandKit={activeBrandKit}
+                allResolved={allResolved}
+              />
+            </>
+          )
         )}
 
         {/* Tab 1: Text & Word/PDF Document Analysis */}
@@ -470,6 +511,7 @@ export function App() {
                         flag={flag}
                         isSelected={selectedFlagId === flag.id}
                         currentUserRole={currentUserRole}
+                        isExpertMode={isExpertMode}
                         onSelect={() => setSelectedFlagId(flag.id)}
                         onAcceptRewrite={handleAcceptRewrite}
                         onRejectFlag={handleRejectFlag}
