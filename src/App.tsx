@@ -14,6 +14,9 @@ import { HelpWalkthroughModal } from './components/HelpWalkthroughModal';
 import { Round3Modal } from './components/Round3Modal';
 import { ApprovalModal } from './components/ApprovalModal';
 import { ApiSettingsModal } from './components/ApiSettingsModal';
+import { ExportReportModal } from './components/ExportReportModal';
+import { AdVariantComparatorModal } from './components/AdVariantComparatorModal';
+import { RegulatoryRiskRadar } from './components/RegulatoryRiskRadar';
 import { defaultEngine } from './services/analyzer';
 import { SAMPLE_DRAFTS, ECOGLOW_BRAND_KIT, FINEDGE_BRAND_KIT } from './data/mockBrandKit';
 import type { SampleDraft } from './data/mockBrandKit';
@@ -33,6 +36,26 @@ export function App() {
   const [activeTab, setActiveTab] = useState<'text' | 'image' | 'analytics'>('text');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Creator');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  // Theme state (Dark / Light mode)
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('brandlens_theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('brandlens_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   // Version history (Slide 8)
   const [versions, setVersions] = useState<ContentVersion[]>([
@@ -55,6 +78,8 @@ export function App() {
   const [isRoadmapOpen, setIsRoadmapOpen] = useState(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [isApiSettingsOpen, setIsApiSettingsOpen] = useState(false);
+  const [isExportReportOpen, setIsExportReportOpen] = useState(false);
+  const [isAdComparatorOpen, setIsAdComparatorOpen] = useState(false);
   const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('brandlens_gemini_key') || '');
 
   // Perform initial scan on load
@@ -308,7 +333,7 @@ export function App() {
   }) : [];
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#faf8f5] dark:bg-slate-950 flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors">
       
       {/* Top Navigation */}
       <Navbar
@@ -318,12 +343,16 @@ export function App() {
         onOpenRoadmap={() => setIsRoadmapOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenExportReport={() => setIsExportReportOpen(true)}
+        onOpenAdComparator={() => setIsAdComparatorOpen(true)}
         hasApiKey={Boolean(apiKey)}
         onToggleApiModal={() => setIsApiSettingsOpen(true)}
         activeBrand={activeBrandKit.brandName}
         onSwitchBrand={handleSwitchBrand}
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         currentUserRole={currentUserRole}
@@ -344,12 +373,22 @@ export function App() {
 
         {/* Compliance Score Gauge & Health Chips */}
         {summary && activeTab === 'text' && (
-          <ScoreBanner 
-            summary={summary} 
-            allResolved={allResolved} 
-            activeView={activeView}
-            onChangeView={setActiveView}
-          />
+          <>
+            <ScoreBanner 
+              summary={summary} 
+              allResolved={allResolved} 
+              activeView={activeView}
+              onChangeView={setActiveView}
+            />
+
+            {/* Real-Time Regulatory & Legal Intelligence Radar */}
+            <RegulatoryRiskRadar
+              summary={summary}
+              draftText={draftText}
+              brandKit={activeBrandKit}
+              allResolved={allResolved}
+            />
+          </>
         )}
 
         {/* Tab 1: Text & Word/PDF Document Analysis */}
@@ -381,55 +420,55 @@ export function App() {
               </div>
 
               {/* Right Pane: Issues, Citations & Suggested Rewrites (5 cols) */}
-              <div className="lg:col-span-5 flex flex-col h-full bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <div className="lg:col-span-5 flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                 
                 {/* Filter Bar with Friendly Step Indicator */}
-                <div className="p-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
                   <div className="flex items-center space-x-1 overflow-x-auto">
                     <button
                       onClick={() => setActiveFilter('all')}
                       className={`text-xs px-2.5 py-1 rounded-md font-semibold transition-colors ${
                         activeFilter === 'all' 
-                          ? 'bg-slate-900 text-white' 
-                          : 'text-slate-600 hover:bg-slate-200/60'
+                          ? 'bg-slate-900 dark:bg-slate-700 text-white' 
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700'
                       }`}
                     >
                       All ({summary?.flags.length || 0})
                     </button>
                     <button
                       onClick={() => setActiveFilter('unverified')}
-                      className={`text-xs px-2 py-1 rounded-md font-semibold transition-colors ${
+                      className={`text-xs px-2.5 py-1 rounded-md font-semibold transition-colors ${
                         activeFilter === 'unverified' 
                           ? 'bg-amber-600 text-white' 
-                          : 'text-amber-800 hover:bg-amber-50'
+                          : 'text-amber-800 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40'
                       }`}
                     >
                       No Proof ({summary ? summary.flags.filter(f => f.claimStatus === 'no_proof_found' && f.status === 'pending').length : 0})
                     </button>
                     <button
                       onClick={() => setActiveFilter('tone')}
-                      className={`text-xs px-2 py-1 rounded-md font-semibold transition-colors ${
+                      className={`text-xs px-2.5 py-1 rounded-md font-semibold transition-colors ${
                         activeFilter === 'tone' 
                           ? 'bg-blue-600 text-white' 
-                          : 'text-blue-800 hover:bg-blue-50'
+                          : 'text-blue-800 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40'
                       }`}
                     >
                       Tone
                     </button>
                     <button
                       onClick={() => setActiveFilter('resolved')}
-                      className={`text-xs px-2 py-1 rounded-md font-semibold transition-colors ${
+                      className={`text-xs px-2.5 py-1 rounded-md font-semibold transition-colors ${
                         activeFilter === 'resolved' 
                           ? 'bg-emerald-700 text-white' 
-                          : 'text-emerald-800 hover:bg-emerald-50'
+                          : 'text-emerald-800 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
                       }`}
                     >
                       Resolved ({summary ? summary.flags.filter(f => f.status !== 'pending').length : 0})
                     </button>
                   </div>
 
-                  <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                    <span className="w-4 h-4 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-[10px] font-bold">2</span>
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    <span className="w-4 h-4 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 flex items-center justify-center text-[10px] font-bold">2</span>
                     Step 2: Fix
                   </span>
                 </div>
@@ -453,11 +492,11 @@ export function App() {
                     ))
                   ) : (
                     <div className="text-center py-16 px-4">
-                      <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                      <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
                         <CheckCircle2 className="w-6 h-6" />
                       </div>
-                      <h4 className="text-sm font-bold text-slate-800">All Clear</h4>
-                      <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">All Clear</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
                         {allResolved 
                           ? "Great job! All flagged claims and brand rules have been addressed." 
                           : "No active flags matching the selected filter."}
@@ -467,13 +506,13 @@ export function App() {
                 </div>
 
                 {/* Bottom Approval Action Bar with Step 3 */}
-                <div className="p-4 border-t border-slate-200 bg-slate-50/90 flex items-center justify-between">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-800/80 flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">3</span>
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center text-[10px] font-bold">3</span>
                       <span>{allResolved ? "Step 3: Ready for Sign-Off" : `${pendingFlags.length} action${pendingFlags.length === 1 ? '' : 's'} remaining`}</span>
                     </div>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {allResolved 
                         ? "Generate official approval certificate" 
                         : "Click 'Accept Fix' on cards above"}
@@ -486,7 +525,7 @@ export function App() {
                     className={`text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all ${
                       allResolved || (summary && summary.flags.length === 0)
                         ? 'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white cursor-pointer shadow-emerald-600/20 shadow-md transform hover:scale-[1.02]'
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4" />
@@ -527,7 +566,7 @@ export function App() {
       </main>
 
       {/* Professional Footer */}
-      <footer className="border-t border-slate-200 bg-white py-3 px-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 px-4 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
             <strong>BrandLens</strong> · Pre-Publishing Compliance Gateway · Built by <strong>Team NovaTech</strong> (Ayushi Mishra, Avishka Kesarwani, Akash, Akshat Kesarwani)
@@ -535,21 +574,21 @@ export function App() {
           <div className="flex items-center space-x-4 text-xs">
             <button 
               onClick={() => setIsHelpOpen(true)}
-              className="text-teal-700 hover:underline font-semibold"
+              className="text-teal-700 dark:text-teal-400 hover:underline font-semibold"
             >
               How It Works (Guide)
             </button>
             <span>·</span>
             <button 
               onClick={() => setIsBrandKitOpen(true)}
-              className="text-slate-700 hover:underline font-semibold"
+              className="text-slate-700 dark:text-slate-300 hover:underline font-semibold"
             >
               Active Brand Kit ({activeBrandKit.brandName})
             </button>
             <span>·</span>
             <button 
               onClick={() => setIsHistoryOpen(true)}
-              className="text-slate-700 hover:underline font-semibold"
+              className="text-slate-700 dark:text-slate-300 hover:underline font-semibold"
             >
               Audit Trail ({versions.length} revisions)
             </button>
@@ -598,6 +637,25 @@ export function App() {
         resolvedCount={summary ? summary.flags.length - pendingFlags.length : 0}
         soundEnabled={soundEnabled}
         onRecordDecision={handleRecordDecision}
+      />
+
+      <ExportReportModal
+        isOpen={isExportReportOpen}
+        onClose={() => setIsExportReportOpen(false)}
+        brandKit={activeBrandKit}
+        summary={summary}
+        draftText={draftText}
+        versions={versions}
+      />
+
+      <AdVariantComparatorModal
+        isOpen={isAdComparatorOpen}
+        onClose={() => setIsAdComparatorOpen(false)}
+        brandKit={activeBrandKit}
+        onApplyVariant={(chosenText) => {
+          setDraftText(chosenText);
+          runAnalysis(chosenText, activeBrandKit);
+        }}
       />
 
       <ApiSettingsModal

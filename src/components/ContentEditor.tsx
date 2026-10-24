@@ -61,12 +61,12 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
    */
   const renderHighlightedContent = () => {
     if (!flags || flags.length === 0) {
-      return <div className="whitespace-pre-wrap text-slate-800 leading-relaxed font-sans">{draftText}</div>;
+      return <div className="whitespace-pre-wrap text-slate-800 dark:text-slate-100 leading-relaxed font-sans">{draftText}</div>;
     }
 
     if (pendingFlags.length === 0) {
       return (
-        <div className="whitespace-pre-wrap text-slate-800 leading-relaxed font-sans">
+        <div className="whitespace-pre-wrap text-slate-800 dark:text-slate-100 leading-relaxed font-sans">
           {draftText}
         </div>
       );
@@ -90,17 +90,17 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       const isSelected = selectedFlagId === flag.id;
       const highlightClass = 
         flag.claimStatus === 'goes_against_facts' 
-          ? 'bg-rose-200/90 text-rose-950 border-b-2 border-rose-500 hover:bg-rose-300' 
+          ? 'bg-rose-200/90 dark:bg-rose-900/70 text-rose-950 dark:text-rose-100 border-b-2 border-rose-500 hover:bg-rose-300 dark:hover:bg-rose-800' 
           : flag.claimStatus === 'no_proof_found'
-          ? 'bg-amber-200/90 text-amber-950 border-b-2 border-amber-500 hover:bg-amber-300'
-          : 'bg-blue-200/90 text-blue-950 border-b-2 border-blue-500 hover:bg-blue-300';
+          ? 'bg-amber-200/90 dark:bg-amber-900/70 text-amber-950 dark:text-amber-100 border-b-2 border-amber-500 hover:bg-amber-300 dark:hover:bg-amber-800'
+          : 'bg-blue-200/90 dark:bg-blue-900/70 text-blue-950 dark:text-blue-100 border-b-2 border-blue-500 hover:bg-blue-300 dark:hover:bg-blue-800';
 
       segments.push(
         <mark
           key={`flag-${flag.id}`}
           onClick={() => onSelectFlag(flag.id)}
           className={`cursor-pointer px-1.5 py-0.5 rounded transition-all font-medium ${highlightClass} ${
-            isSelected ? 'ring-2 ring-teal-600 shadow-md font-semibold scale-105 inline-block' : ''
+            isSelected ? 'ring-2 ring-teal-600 dark:ring-teal-400 shadow-md font-semibold scale-105 inline-block' : ''
           }`}
           title={`${flag.policySection}: ${flag.ruleTitle}`}
         >
@@ -120,18 +120,18 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     return (
-      <div className="whitespace-pre-wrap text-slate-800 leading-relaxed font-sans text-base">
+      <div className="whitespace-pre-wrap text-slate-800 dark:text-slate-100 leading-relaxed font-sans text-base">
         {segments}
       </div>
     );
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden relative">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden relative transition-colors">
       
       {/* Laser Scanning Beam Animation Overlay */}
       {isAnalyzing && (
-        <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden bg-slate-900/5 backdrop-blur-[1px]">
+        <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden bg-slate-900/5 dark:bg-black/40 backdrop-blur-[1px]">
           <div className="w-full h-1 bg-gradient-to-r from-transparent via-teal-500 to-transparent shadow-[0_0_15px_#0d9488] animate-bounce" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900/90 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 shadow-2xl border border-teal-500/50">
             <Sparkles className="w-4 h-4 text-teal-400 animate-spin" />
@@ -141,18 +141,18 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       )}
 
       {/* Editor Header */}
-      <div className="px-5 py-3 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between flex-wrap gap-2">
+      <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/60 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center space-x-2">
-          <span className="text-xs uppercase font-bold tracking-wider text-slate-600">
+          <span className="text-xs uppercase font-bold tracking-wider text-slate-600 dark:text-slate-300">
             Draft Workspace
           </span>
           {uploadedFileName && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-teal-100 text-teal-800 flex items-center gap-1 font-mono">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 flex items-center gap-1 font-mono">
               <FileText className="w-3 h-3" /> {uploadedFileName}
             </span>
           )}
-          <span className="text-xs text-slate-300">|</span>
-          <span className="text-xs text-slate-500 font-mono">
+          <span className="text-xs text-slate-300 dark:text-slate-600">|</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
             {draftText.length} chars · {draftText.trim().split(/\s+/).filter(Boolean).length} words
           </span>
         </div>
@@ -160,8 +160,8 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         <div className="flex items-center space-x-2">
           
           {/* File Upload Button (Slide 8: Check text and Word/PDF files) */}
-          <label className="text-xs font-semibold text-slate-700 hover:text-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 transition-colors">
-            <Upload className="w-3.5 h-3.5 text-teal-600" />
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors">
+            <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
             <span>{isParsingFile ? "Reading..." : "Upload Doc/PDF"}</span>
             <input 
               type="file" 
@@ -185,24 +185,24 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
 
           <button
             onClick={() => setIsRawEdit(!isRawEdit)}
-            className="text-xs text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-medium transition-colors"
+            className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors"
           >
             {isRawEdit ? "Highlights" : "Edit Raw"}
           </button>
 
           <button
             onClick={handleCopy}
-            className="text-xs text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 font-medium flex items-center gap-1 transition-colors"
+            className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium flex items-center gap-1 transition-colors"
             title="Copy text"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? "Copied" : "Copy"}</span>
           </button>
 
           <button
             onClick={onReanalyze}
             disabled={isAnalyzing}
-            className="text-xs bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 shadow-sm transition-colors"
+            className="text-xs bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 border border-transparent dark:border-slate-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 shadow-sm transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
             <span>{isAnalyzing ? "Scanning..." : "Re-Scan"}</span>
@@ -211,13 +211,13 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       </div>
 
       {/* Editor Content Area */}
-      <div className="p-6 flex-1 overflow-y-auto min-h-[380px] bg-white">
+      <div className="p-6 flex-1 overflow-y-auto min-h-[380px] bg-white dark:bg-slate-900 transition-colors">
         {isRawEdit ? (
           <textarea
             value={draftText}
             onChange={(e) => onChangeText(e.target.value)}
             placeholder="Paste your marketing draft, social ad copy, or upload a Word/PDF document..."
-            className="w-full h-full min-h-[350px] p-2 text-base font-sans text-slate-800 leading-relaxed focus:outline-none resize-none border border-teal-200/40 rounded-xl"
+            className="w-full h-full min-h-[350px] p-2 text-base font-sans text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 leading-relaxed focus:outline-none resize-none border border-teal-200/40 dark:border-teal-700/40 rounded-xl"
           />
         ) : (
           <div>{renderHighlightedContent()}</div>
@@ -225,9 +225,9 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       </div>
 
       {/* Visual Helper Legend */}
-      <div className="px-5 py-2.5 border-t border-slate-100 bg-slate-50/60 flex flex-wrap items-center justify-between text-xs text-slate-500">
+      <div className="px-5 py-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 transition-colors">
         <div className="flex items-center space-x-3">
-          <span className="font-semibold text-slate-600">3-Tier Verification (Slide 8):</span>
+          <span className="font-semibold text-slate-600 dark:text-slate-300">3-Tier Verification (Slide 8):</span>
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-sm"></span> Goes Against Facts
           </span>
@@ -238,7 +238,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
             <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block shadow-sm"></span> Tone & Voice
           </span>
         </div>
-        <div className="text-[11px] text-slate-400 italic">
+        <div className="text-[11px] text-slate-400 dark:text-slate-400 italic">
           Click any highlight to view rule citation, rewrite & discussion notes
         </div>
       </div>
