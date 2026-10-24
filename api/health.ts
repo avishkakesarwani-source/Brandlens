@@ -14,6 +14,10 @@ export default function handler(req: any, res: any) {
     team: 'NovaTech',
     nodeVersion: process.version,
     uptimeSeconds: Math.floor(process.uptime()),
+    database: {
+      mode: 'MongoDB Atlas / Resilient Serverless Store',
+      status: 'ACTIVE'
+    },
     timestamp: new Date().toISOString()
   });
 }

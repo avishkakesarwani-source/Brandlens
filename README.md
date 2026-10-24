@@ -96,10 +96,11 @@ In our Round 1 proposal, we pledged to test BrandLens against 20 sample pieces c
 
 ---
 
-## 💻 Tech Stack
+## 💻 Tech Stack (MERN Architecture)
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons
 - **Backend & REST API:** Node.js, Express, REST Architecture, Vercel Serverless Functions (`/api/*`)
+- **Database:** MongoDB Atlas via Mongoose (`AuditLog`, `BrandKit` schemas) with resilient auto-fallback
 - **AI & Grounding:** Google Gemini API (`@google/genai`), Custom Grounding Filter
 - **Security & Cryptography:** Web Crypto API (SHA-256), Regex PII Masking, DoS Payload Guard
 - **Styling & Design System:** Tailored Inkloom color tokens (Teal, Deep Navy, Warm Off-White)
@@ -107,17 +108,18 @@ In our Round 1 proposal, we pledged to test BrandLens against 20 sample pieces c
 
 ---
 
-## 🔌 Backend REST API Endpoints
+## 🔌 Backend REST API & Database Endpoints
 
-The project includes an enterprise **Node.js Express REST Backend** (`server/server.js`) that also runs serverless on Vercel:
+The project includes an enterprise **Node.js Express REST Backend** (`server/server.js`) with **MongoDB Mongoose** integration:
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/health` | System health check, Node.js runtime stats, uptime, and engine status |
-| `GET` | `/api/brand-kits` | Governed Brand Kit rules, certified facts, and banned superlatives |
+| `GET` | `/api/health` | System health check, Node.js runtime stats, database status, and uptime |
+| `GET` | `/api/db-status` | Live database connection telemetry (MongoDB Atlas / Resilient Store) |
+| `GET` | `/api/brand-kits` | Governed Brand Kit rules, certified facts, and banned superlatives from DB |
 | `POST` | `/api/analyze` | Hybrid backend analysis pipeline with server-side SHA-256 seal |
-| `POST` | `/api/audit-logs` | Cryptographic publication approval and audit certificate creation |
-| `GET` | `/api/audit-logs` | Tamper-evident audit logs and verified certificate history |
+| `POST` | `/api/audit-logs` | Cryptographic publication approval and audit certificate creation in MongoDB |
+| `GET` | `/api/audit-logs` | Tamper-evident audit logs and verified certificate history from DB |
 
 ---
 

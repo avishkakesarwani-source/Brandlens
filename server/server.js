@@ -1,5 +1,5 @@
 /**
- * BrandLens Enterprise Node.js / Express REST API Server
+ * BrandLens Enterprise Node.js / Express REST API Server with MongoDB Mongoose
  * Team NovaTech — TechCircuit Round 2
  * Backend Lead: Avishka Kesarwani
  */
@@ -7,6 +7,9 @@
 import express from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
+import { connectDB, getDBStatus } from './db.js';
+import { AuditLog } from './models/AuditLog.js';
+import { BrandKit } from './models/BrandKit.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,8 +18,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// In-Memory Audit Trail Registry (Ready for MongoDB Mongoose Model in Phase 3)
-const auditLogRegistry = [
+// Resilient In-Memory Fallback Registry (Zero-setup & always available)
+const fallbackAuditLogs = [
   {
     certificateId: 'CERT-2026-ECO-9941',
     brandName: 'EcoGlow Organics',
@@ -29,9 +32,10 @@ const auditLogRegistry = [
   }
 ];
 
-// Governed Brand Kits Data
-const BRAND_KITS = {
+// Governed Brand Kits Seed Data
+const DEFAULT_BRAND_KITS = {
   ecoglow: {
+    brandKey: 'ecoglow',
     brandName: 'EcoGlow Organics',
     industry: 'Clean Skincare & Cosmetics',
     certifiedFacts: [
@@ -40,9 +44,12 @@ const BRAND_KITS = {
       '100% PCR recyclable aluminum packaging with FSC-certified carton',
       'Leaping Bunny certified cruelty-free (License #CR-8821)'
     ],
-    bannedBuzzwords: ['100% chemical free', 'miracle cure', 'totally green', 'instant magic', 'zero impact', 'flawless skin in seconds']
+    bannedBuzzwords: ['100% chemical free', 'miracle cure', 'totally green', 'instant magic', 'zero impact', 'flawless skin in seconds'],
+    primaryColor: '#0d9488',
+    secondaryColor: '#1e293b'
   },
   finedge: {
+    brandKey: 'finedge',
     brandName: 'FinEdge Capital',
     industry: 'Regulated Wealth & Investment Tech',
     certifiedFacts: [
@@ -50,7 +57,9 @@ const BRAND_KITS = {
       'Bank deposits FDIC insured up to $2,500,000 via program banks',
       'Historical 10-year annualized balanced portfolio return: 8.4% (Past performance does not guarantee future results)'
     ],
-    bannedBuzzwords: ['guaranteed returns', 'risk-free profit', 'double your money', 'can’t lose', 'sureshot wealth']
+    bannedBuzzwords: ['guaranteed returns', 'risk-free profit', 'double your money', 'can’t lose', 'sureshot wealth'],
+    primaryColor: '#4f46e5',
+    secondaryColor: '#0f172a'
   }
 };
 
@@ -61,24 +70,51 @@ const BRAND_KITS = {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ONLINE',
-    service: 'BrandLens Pre-Publishing Backend Engine',
+    service: 'BrandLens Pre-Publishing Backend Engine (Express + MongoDB)',
     version: '2.0.0-enterprise',
     team: 'NovaTech',
     nodeVersion: process.version,
     uptimeSeconds: Math.floor(process.uptime()),
+    database: getDBStatus(),
     timestamp: new Date().toISOString()
   });
 });
 
 /**
- * Endpoint: GET /api/brand-kits
- * Returns list of governed Brand Kits
+ * Endpoint: GET /api/db-status
+ * Returns live MongoDB connection mode and telemetry
  */
-app.get('/api/brand-kits', (req, res) => {
+app.get('/api/db-status', (req, res) => {
   res.json({
     success: true,
-    count: Object.keys(BRAND_KITS).length,
-    brandKits: BRAND_KITS
+    database: getDBStatus()
+  });
+});
+
+/**
+ * Endpoint: GET /api/brand-kits
+ * Returns list of governed Brand Kits from MongoDB or fallback seed
+ */
+app.get('/api/brand-kits', async (req, res) => {
+  try {
+    const dbStatus = getDBStatus();
+    if (dbStatus.isConnected) {
+      const kits = await BrandKit.find({});
+      if (kits && kits.length > 0) {
+        const formatted = {};
+        kits.forEach(k => { formatted[k.brandKey] = k; });
+        return res.json({ success: true, source: 'MongoDB Atlas', brandKits: formatted });
+      }
+    }
+  } catch (err) {
+    console.warn('[BrandLens DB] Query failed, serving seed brand kits:', err.message);
+  }
+
+  return res.json({
+    success: true,
+    source: 'Governed Seed Repository',
+    count: Object.keys(DEFAULT_BRAND_KITS).length,
+    brandKits: DEFAULT_BRAND_KITS
   });
 });
 
@@ -93,10 +129,10 @@ app.post('/api/analyze', (req, res) => {
     return res.status(400).json({ error: 'Missing or invalid draftText string' });
   }
 
-  const selectedKit = BRAND_KITS[brandKey] || BRAND_KITS.ecoglow;
+  const selectedKit = DEFAULT_BRAND_KITS[brandKey] || DEFAULT_BRAND_KITS.ecoglow;
   const flags = [];
 
-  // 1. Check for banned buzzwords
+  // Check for banned buzzwords
   selectedKit.bannedBuzzwords.forEach((buzzword) => {
     const regex = new RegExp(`\\b${buzzword}\\b`, 'gi');
     let match;
@@ -114,10 +150,7 @@ app.post('/api/analyze', (req, res) => {
     }
   });
 
-  // Calculate score
   const score = Math.max(20, 100 - (flags.length * 15));
-
-  // Compute server-side cryptographic SHA-256
   const hash = '0x' + crypto.createHash('sha256').update(draftText).digest('hex');
 
   res.json({
@@ -133,9 +166,9 @@ app.post('/api/analyze', (req, res) => {
 
 /**
  * Endpoint: POST /api/audit-logs
- * Logs approved publication with cryptographic certificate
+ * Logs approved publication with cryptographic certificate in MongoDB
  */
-app.post('/api/audit-logs', (req, res) => {
+app.post('/api/audit-logs', async (req, res) => {
   const { brandName, approver, draftText, sha256Hash, complianceScore } = req.body;
 
   if (!draftText || !sha256Hash) {
@@ -152,15 +185,34 @@ app.post('/api/audit-logs', (req, res) => {
     approvedBy: approver || 'Brand Manager',
     complianceScore: complianceScore || 100,
     sha256Hash,
+    draftText,
     hashIntegrityVerified: isHashVerified,
     approvedAt: new Date().toISOString(),
     status: isHashVerified ? 'CERTIFIED_VERIFIED' : 'INTEGRITY_MISMATCH'
   };
 
-  auditLogRegistry.unshift(newLog);
+  // Attempt save to MongoDB
+  try {
+    const dbStatus = getDBStatus();
+    if (dbStatus.isConnected) {
+      const savedDoc = await AuditLog.create(newLog);
+      return res.status(201).json({
+        success: true,
+        source: 'MongoDB Atlas',
+        message: 'Publication certificate saved to MongoDB database',
+        certificate: savedDoc
+      });
+    }
+  } catch (err) {
+    console.warn('[BrandLens DB] Could not write to MongoDB, fallback to memory store:', err.message);
+  }
+
+  // Fallback to memory registry
+  fallbackAuditLogs.unshift(newLog);
 
   res.status(201).json({
     success: true,
+    source: 'Resilient Memory Store',
     message: 'Publication certificate issued and registered in audit log',
     certificate: newLog
   });
@@ -168,21 +220,44 @@ app.post('/api/audit-logs', (req, res) => {
 
 /**
  * Endpoint: GET /api/audit-logs
- * Retrieves verified audit logs
+ * Retrieves verified audit logs from MongoDB or memory registry
  */
-app.get('/api/audit-logs', (req, res) => {
-  res.json({
+app.get('/api/audit-logs', async (req, res) => {
+  try {
+    const dbStatus = getDBStatus();
+    if (dbStatus.isConnected) {
+      const docs = await AuditLog.find({}).sort({ createdAt: -1 }).limit(50);
+      if (docs && docs.length > 0) {
+        return res.json({
+          success: true,
+          source: 'MongoDB Atlas',
+          count: docs.length,
+          logs: docs
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[BrandLens DB] MongoDB read error, falling back to local store:', err.message);
+  }
+
+  return res.json({
     success: true,
-    count: auditLogRegistry.length,
-    logs: auditLogRegistry
+    source: 'Resilient Memory Store',
+    count: fallbackAuditLogs.length,
+    logs: fallbackAuditLogs
   });
 });
+
+// Initialize Database connection on start
+connectDB().catch(err => console.warn('[BrandLens DB] Init connection notice:', err.message));
 
 // Start server
 app.listen(PORT, () => {
   console.log(`[BrandLens Backend] Node.js Express server running at http://localhost:${PORT}`);
+  console.log(`[BrandLens Backend] Database Mode: ${getDBStatus().mode}`);
   console.log(`[BrandLens Backend] Endpoints:`);
   console.log(`  - GET  /api/health`);
+  console.log(`  - GET  /api/db-status`);
   console.log(`  - GET  /api/brand-kits`);
   console.log(`  - POST /api/analyze`);
   console.log(`  - POST /api/audit-logs`);
