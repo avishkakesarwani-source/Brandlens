@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
-import { QuickGuideBanner } from './components/QuickGuideBanner';
 import { ScoreBanner } from './components/ScoreBanner';
 import { ContentEditor } from './components/ContentEditor';
 import { IssueCard } from './components/IssueCard';
@@ -10,7 +9,6 @@ import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { BrandKitModal } from './components/BrandKitModal';
 import { BrandKitEditorModal } from './components/BrandKitEditorModal';
 import { VersionHistoryDrawer } from './components/VersionHistoryDrawer';
-import { HelpWalkthroughModal } from './components/HelpWalkthroughModal';
 import { Round3Modal } from './components/Round3Modal';
 import { ApprovalModal } from './components/ApprovalModal';
 import { ApiSettingsModal } from './components/ApiSettingsModal';
@@ -72,7 +70,6 @@ export function App() {
   ]);
 
   // Modals
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isBrandKitOpen, setIsBrandKitOpen] = useState(false);
   const [isBrandEditorOpen, setIsBrandEditorOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -343,7 +340,6 @@ export function App() {
         onOpenCustomBrandEditor={() => setIsBrandEditorOpen(true)}
         onOpenRoadmap={() => setIsRoadmapOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
-        onOpenHelp={() => setIsHelpOpen(true)}
         onOpenExportReport={() => setIsExportReportOpen(true)}
         onOpenAdComparator={() => setIsAdComparatorOpen(true)}
         hasApiKey={Boolean(apiKey)}
@@ -362,16 +358,6 @@ export function App() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col">
-        
-        {/* Friendly 3-Step Guided Tour Banner (Removes all confusion for anyone!) */}
-        <QuickGuideBanner
-          onLoadDemo={() => handleSelectSample(SAMPLE_DRAFTS[0])}
-          onAutoFix={handleAutoFixAll}
-          onOpenApproval={() => setIsApprovalOpen(true)}
-          onOpenFullGuide={() => setActiveTab('guide')}
-          hasPendingFlags={pendingFlags.length > 0}
-          allResolved={allResolved}
-        />
 
         {/* Compliance Score Gauge & Health Chips */}
         {summary && activeTab === 'text' && (
@@ -612,12 +598,6 @@ export function App() {
       </footer>
 
       {/* Modals */}
-      <HelpWalkthroughModal
-        isOpen={isHelpOpen}
-        onClose={() => setIsHelpOpen(false)}
-        onStartDemo={() => handleSelectSample(SAMPLE_DRAFTS[0])}
-      />
-
       <BrandKitModal
         isOpen={isBrandKitOpen}
         onClose={() => setIsBrandKitOpen(false)}

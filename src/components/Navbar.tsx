@@ -29,7 +29,6 @@ interface NavbarProps {
   onOpenCustomBrandEditor: () => void;
   onOpenRoadmap: () => void;
   onOpenHistory: () => void;
-  onOpenHelp: () => void;
   onOpenExportReport: () => void;
   onOpenAdComparator: () => void;
   hasApiKey: boolean;
@@ -52,7 +51,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCustomBrandEditor,
   onOpenRoadmap,
   onOpenHistory,
-  onOpenHelp,
   onOpenExportReport,
   onOpenAdComparator,
   hasApiKey,
@@ -157,16 +155,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Side: Clean Help, Theme Toggle & Grouped Tools Dropdown */}
         <div className="flex items-center space-x-2">
-          
-          {/* Friendly Help Button */}
-          <button
-            onClick={onOpenHelp}
-            className="text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 px-2.5 py-1.5 rounded-lg border border-teal-200 dark:border-teal-800 flex items-center gap-1 transition-colors"
-            title="How to use BrandLens in 30 seconds"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span className="hidden sm:inline">How It Works</span>
-          </button>
 
           {/* Active Brand Switcher (EcoGlow / FinEdge) */}
           <div className="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
