@@ -18,7 +18,7 @@ import { defaultEngine } from './services/analyzer';
 import { SAMPLE_DRAFTS, ECOGLOW_BRAND_KIT, FINEDGE_BRAND_KIT } from './data/mockBrandKit';
 import type { SampleDraft } from './data/mockBrandKit';
 import type { AnalysisSummary, BrandKit, ContentVersion, UserRole, ApprovalRecord, FlagComment } from './types';
-import { ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react';
 import { triggerCelebration, playFeedbackSound } from './utils/effects';
 
 export function App() {
@@ -364,8 +364,36 @@ export function App() {
 
         {/* Tab 1: Text & Word/PDF Document Analysis */}
         {activeTab === 'text' && (
-          activeView === 'inspect' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+          <>
+            {/* Quick Inspiration & Ad Format Presets Carousel (Interactive & Fun) */}
+            <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 pl-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                <span>Test Formats:</span>
+              </span>
+              {SAMPLE_DRAFTS.map((sample) => {
+                const isSelected = draftText === sample.draftText;
+                return (
+                  <button
+                    key={sample.id}
+                    onClick={() => {
+                      handleSelectSample(sample);
+                      if (soundEnabled) playFeedbackSound('scan');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-teal-500/20 scale-102 ring-2 ring-teal-400'
+                        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-teal-400 dark:hover:border-teal-600 hover:text-teal-700 dark:hover:text-teal-300'
+                    }`}
+                  >
+                    <span>{sample.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeView === 'inspect' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
               
               {/* Left Pane: Interactive Document & Highlighting (7 cols) */}
               <div className="lg:col-span-7 flex flex-col h-full min-h-[500px]">
@@ -517,8 +545,9 @@ export function App() {
                 flags={summary ? summary.flags : []}
               />
             </div>
-          )
-        )}
+          )}
+        </>
+      )}
 
         {/* Tab 2: Image Compliance Studio */}
         {activeTab === 'image' && (

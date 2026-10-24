@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { ContentFlag } from '../types';
-import { RefreshCw, Copy, Check, Wand2, Sparkles, Upload, FileText } from 'lucide-react';
+import { RefreshCw, Copy, Check, Wand2, Sparkles, Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { parseUploadedFile } from '../utils/fileParser';
 
 interface ContentEditorProps {
@@ -66,8 +66,14 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
 
     if (pendingFlags.length === 0) {
       return (
-        <div className="whitespace-pre-wrap text-slate-800 dark:text-slate-100 leading-relaxed font-sans">
-          {draftText}
+        <div className="space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-200 dark:border-emerald-800 animate-in fade-in">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Zero Claim Violations · Ready for Publishing</span>
+          </div>
+          <div className="whitespace-pre-wrap text-slate-800 dark:text-slate-100 leading-relaxed font-sans text-base">
+            {draftText}
+          </div>
         </div>
       );
     }

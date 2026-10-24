@@ -13,6 +13,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import type { ContentFlag, UserRole } from '../types';
+import { playFeedbackSound } from '../utils/effects';
 
 interface IssueCardProps {
   flag: ContentFlag;
@@ -43,6 +44,30 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [customText, setCustomText] = useState(flag.suggestedRewrite);
+  const [toneMode, setToneMode] = useState<'factual' | 'punchy' | 'gentle'>('factual');
+
+  const getToneRewrite = () => {
+    const base = flag.suggestedRewrite;
+    if (toneMode === 'punchy') {
+      if (/designed to help reduce/i.test(base)) {
+        return base.replace(/designed to help reduce/i, 'engineered to drastically cut');
+      }
+      if (/competitively priced/i.test(base)) {
+        return 'unbeatable sustainable value for conscious buyers';
+      }
+      return base.replace(/\.$/, '') + ' for maximum impact.';
+    }
+    if (toneMode === 'gentle') {
+      if (/designed to help reduce/i.test(base)) {
+        return base.replace(/designed to help reduce/i, 'a certified, transparent step to reducing');
+      }
+      if (/competitively priced/i.test(base)) {
+        return 'fairly and honestly priced with zero hidden costs';
+      }
+      return 'honestly verified: ' + base;
+    }
+    return base;
+  };
 
   const isResolved = flag.status !== 'pending';
 
@@ -140,12 +165,66 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           </p>
         </div>
 
-        {/* Suggested Rewrite */}
+        {/* Suggested Rewrite with Fun Tone Tuner */}
         {!isResolved && (
-          <div className="bg-emerald-50/70 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
-            <div className="text-[10px] font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1 mb-1">
-              <CornerDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              Suggested Compliant Rewrite
+          <div className="bg-emerald-50/80 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
+            <div className="flex items-center justify-between gap-1 mb-1.5 flex-wrap">
+              <div className="text-[10px] font-bold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
+                <CornerDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Approved Rewrite</span>
+              </div>
+
+              {/* Tone Tuner Pills */}
+              <div className="flex items-center gap-1 text-[10px] bg-white/80 dark:bg-slate-900/80 p-0.5 rounded-lg border border-emerald-200/80 dark:border-emerald-800/50">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setToneMode('factual');
+                    playFeedbackSound('fix');
+                  }}
+                  className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                    toneMode === 'factual'
+                      ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700'
+                  }`}
+                  title="Factual and direct"
+                >
+                  🎯 Factual
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setToneMode('punchy');
+                    playFeedbackSound('fix');
+                  }}
+                  className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                    toneMode === 'punchy'
+                      ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700'
+                  }`}
+                  title="Bold and punchy"
+                >
+                  ⚡ Bold
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setToneMode('gentle');
+                    playFeedbackSound('fix');
+                  }}
+                  className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                    toneMode === 'gentle'
+                      ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700'
+                  }`}
+                  title="Honest and transparent"
+                >
+                  🌿 Honest
+                </button>
+              </div>
             </div>
 
             {isEditing ? (
@@ -153,7 +232,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  className="w-full text-xs p-2 rounded-lg border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white"
+                  className="w-full text-xs p-2 rounded-lg border border-emerald-300 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
                   rows={2}
                 />
                 <div className="flex justify-end gap-2">
@@ -162,7 +241,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                       e.stopPropagation();
                       setIsEditing(false);
                     }}
-                    className="text-xs px-2 py-1 text-slate-600 hover:text-slate-800"
+                    className="text-xs px-2 py-1 text-slate-600 hover:text-slate-800 dark:text-slate-400"
                   >
                     Cancel
                   </button>
@@ -171,6 +250,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
                       e.stopPropagation();
                       onCustomEdit(flag.id, customText);
                       setIsEditing(false);
+                      playFeedbackSound('fix');
                     }}
                     className="text-xs px-2.5 py-1 bg-emerald-700 text-white rounded font-medium hover:bg-emerald-800"
                   >
@@ -180,7 +260,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
               </div>
             ) : (
               <p className="text-xs font-semibold text-emerald-950 dark:text-emerald-200 leading-relaxed italic">
-                "{flag.suggestedRewrite}"
+                "{getToneRewrite()}"
               </p>
             )}
           </div>
@@ -281,9 +361,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onAcceptRewrite(flag.id, flag.suggestedRewrite);
+                onAcceptRewrite(flag.id, getToneRewrite());
+                playFeedbackSound('fix');
               }}
-              className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm transition-transform active:scale-95"
+              className="text-xs bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded-lg font-bold flex items-center gap-1 shadow-sm transition-transform active:scale-95 cursor-pointer"
               title="Replace flagged phrase with verified compliant rewrite"
             >
               <Check className="w-3.5 h-3.5" />
@@ -295,8 +376,9 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               onResetFlag(flag.id);
+              playFeedbackSound('fix');
             }}
-            className="text-xs text-slate-500 dark:text-slate-400 hover:text-teal-700 dark:hover:text-teal-400 flex items-center gap-1 font-medium transition-colors"
+            className="text-xs text-slate-500 dark:text-slate-400 hover:text-teal-700 dark:hover:text-teal-400 flex items-center gap-1 font-medium transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Undo</span>
