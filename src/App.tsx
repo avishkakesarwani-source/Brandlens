@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
+import { QuickGuideBanner } from './components/QuickGuideBanner';
 import { ScoreBanner } from './components/ScoreBanner';
 import { ContentEditor } from './components/ContentEditor';
 import { IssueCard } from './components/IssueCard';
@@ -9,6 +10,7 @@ import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { BrandKitModal } from './components/BrandKitModal';
 import { BrandKitEditorModal } from './components/BrandKitEditorModal';
 import { VersionHistoryDrawer } from './components/VersionHistoryDrawer';
+import { HelpWalkthroughModal } from './components/HelpWalkthroughModal';
 import { Round3Modal } from './components/Round3Modal';
 import { ApprovalModal } from './components/ApprovalModal';
 import { ApiSettingsModal } from './components/ApiSettingsModal';
@@ -46,6 +48,7 @@ export function App() {
   ]);
 
   // Modals
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isBrandKitOpen, setIsBrandKitOpen] = useState(false);
   const [isBrandEditorOpen, setIsBrandEditorOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -89,7 +92,7 @@ export function App() {
     runAnalysis(relevantSample.draftText, brandKit);
   };
 
-  // Support for ANY custom brand (Slide 8: Brand kit: rules, facts, words, colors)
+  // Support for ANY custom brand
   const handleSaveCustomBrand = (newKit: BrandKit) => {
     setActiveBrandKit(newKit);
     defaultEngine.setBrandKit(newKit);
@@ -136,7 +139,6 @@ export function App() {
       flags: updatedFlags
     });
 
-    // Record revision in Version History
     const newVer: ContentVersion = {
       versionNumber: Number((versions[versions.length - 1].versionNumber + 0.1).toFixed(1)),
       author: "Ayushi Mishra",
@@ -257,7 +259,7 @@ export function App() {
     });
   };
 
-  // Add Comment to Flag (Slide 8: comments)
+  // Add Comment to Flag
   const handleAddComment = (flagId: string, commentText: string) => {
     if (!summary) return;
     const newComment: FlagComment = {
@@ -278,7 +280,7 @@ export function App() {
     setSummary({ ...summary, flags: updatedFlags });
   };
 
-  // Manager Approval or Changes Requested Decision (Slide 7)
+  // Manager Approval or Changes Requested Decision
   const handleRecordDecision = (record: ApprovalRecord) => {
     const newVer: ContentVersion = {
       versionNumber: Number((versions[versions.length - 1].versionNumber + 0.1).toFixed(1)),
@@ -294,15 +296,13 @@ export function App() {
     setVersions([...versions, newVer]);
   };
 
-  // Check if all flags have been resolved
   const pendingFlags = summary ? summary.flags.filter(f => f.status === 'pending') : [];
   const allResolved = summary !== null && summary.flags.length > 0 && pendingFlags.length === 0;
 
-  // Filter flags
   const filteredFlags = summary ? summary.flags.filter(f => {
     if (activeFilter === 'resolved') return f.status !== 'pending';
-    if (activeFilter === 'unverified') return f.flagType === 'unverified' && f.status === 'pending';
-    if (activeFilter === 'contradicted') return f.flagType === 'contradicted' && f.status === 'pending';
+    if (activeFilter === 'unverified') return f.claimStatus === 'no_proof_found' && f.status === 'pending';
+    if (activeFilter === 'contradicted') return f.claimStatus === 'goes_against_facts' && f.status === 'pending';
     if (activeFilter === 'tone') return f.flagType === 'tone_voice' && f.status === 'pending';
     return true; // 'all'
   }) : [];
@@ -317,6 +317,7 @@ export function App() {
         onOpenCustomBrandEditor={() => setIsBrandEditorOpen(true)}
         onOpenRoadmap={() => setIsRoadmapOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
+        onOpenHelp={() => setIsHelpOpen(true)}
         hasApiKey={Boolean(apiKey)}
         onToggleApiModal={() => setIsApiSettingsOpen(true)}
         activeBrand={activeBrandKit.brandName}
@@ -332,6 +333,15 @@ export function App() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col">
         
+        {/* Friendly 3-Step Guided Tour Banner (Removes all confusion for anyone!) */}
+        <QuickGuideBanner
+          onLoadDemo={() => handleSelectSample(SAMPLE_DRAFTS[0])}
+          onAutoFix={handleAutoFixAll}
+          onOpenApproval={() => setIsApprovalOpen(true)}
+          hasPendingFlags={pendingFlags.length > 0}
+          allResolved={allResolved}
+        />
+
         {/* Compliance Score Gauge & Health Chips */}
         {summary && activeTab === 'text' && (
           <ScoreBanner 
@@ -342,13 +352,21 @@ export function App() {
           />
         )}
 
-        {/* Tab 1: Text & Word/PDF Document Analysis (Slide 8) */}
+        {/* Tab 1: Text & Word/PDF Document Analysis */}
         {activeTab === 'text' && (
           activeView === 'inspect' ? (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
               
               {/* Left Pane: Interactive Document & Highlighting (7 cols) */}
               <div className="lg:col-span-7 flex flex-col h-full min-h-[500px]">
+                <div className="mb-2 flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-[11px] font-bold">1</span>
+                    Step 1: Check Marketing Copy
+                  </span>
+                  <span className="text-slate-400 text-[11px]">Click any highlighted word to inspect</span>
+                </div>
+
                 <ContentEditor
                   draftText={draftText}
                   flags={summary ? summary.flags : []}
@@ -365,7 +383,7 @@ export function App() {
               {/* Right Pane: Issues, Citations & Suggested Rewrites (5 cols) */}
               <div className="lg:col-span-5 flex flex-col h-full bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
                 
-                {/* Filter Bar */}
+                {/* Filter Bar with Friendly Step Indicator */}
                 <div className="p-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
                   <div className="flex items-center space-x-1 overflow-x-auto">
                     <button
@@ -410,8 +428,9 @@ export function App() {
                     </button>
                   </div>
 
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    Rule Inspector
+                  <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                    <span className="w-4 h-4 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-[10px] font-bold">2</span>
+                    Step 2: Fix
                   </span>
                 </div>
 
@@ -447,18 +466,17 @@ export function App() {
                   )}
                 </div>
 
-                {/* Bottom Approval Action Bar */}
+                {/* Bottom Approval Action Bar with Step 3 */}
                 <div className="p-4 border-t border-slate-200 bg-slate-50/90 flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-bold text-slate-800">
-                      {allResolved 
-                        ? "Ready for Manager Sign-off" 
-                        : `${pendingFlags.length} action${pendingFlags.length === 1 ? '' : 's'} remaining`}
+                    <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">3</span>
+                      <span>{allResolved ? "Step 3: Ready for Sign-Off" : `${pendingFlags.length} action${pendingFlags.length === 1 ? '' : 's'} remaining`}</span>
                     </div>
                     <p className="text-[11px] text-slate-500">
                       {allResolved 
-                        ? "Generate formal approval certificate" 
-                        : "Accept or dismiss flags to proceed"}
+                        ? "Generate official approval certificate" 
+                        : "Click 'Accept Fix' on cards above"}
                     </p>
                   </div>
 
@@ -492,14 +510,14 @@ export function App() {
           )
         )}
 
-        {/* Tab 2: Image Compliance Studio (Slide 8: Check images: colours and alt text) */}
+        {/* Tab 2: Image Compliance Studio */}
         {activeTab === 'image' && (
           <ImageComplianceStudio 
             brandKit={activeBrandKit} 
           />
         )}
 
-        {/* Tab 3: Dashboard of Repeat Mistakes & Unclear Rules (Slide 8 & Slide 6) */}
+        {/* Tab 3: Dashboard of Repeat Mistakes & Unclear Rules */}
         {activeTab === 'analytics' && (
           <AnalyticsDashboard 
             brandKit={activeBrandKit} 
@@ -516,17 +534,17 @@ export function App() {
           </span>
           <div className="flex items-center space-x-4 text-xs">
             <button 
-              onClick={() => setIsBrandKitOpen(true)}
+              onClick={() => setIsHelpOpen(true)}
               className="text-teal-700 hover:underline font-semibold"
             >
-              Active Brand Kit ({activeBrandKit.brandName})
+              How It Works (Guide)
             </button>
             <span>·</span>
             <button 
-              onClick={() => setIsBrandEditorOpen(true)}
-              className="text-teal-700 hover:underline font-semibold"
+              onClick={() => setIsBrandKitOpen(true)}
+              className="text-slate-700 hover:underline font-semibold"
             >
-              Create Brand Kit for Any Brand
+              Active Brand Kit ({activeBrandKit.brandName})
             </button>
             <span>·</span>
             <button 
@@ -540,6 +558,12 @@ export function App() {
       </footer>
 
       {/* Modals */}
+      <HelpWalkthroughModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        onStartDemo={() => handleSelectSample(SAMPLE_DRAFTS[0])}
+      />
+
       <BrandKitModal
         isOpen={isBrandKitOpen}
         onClose={() => setIsBrandKitOpen(false)}
