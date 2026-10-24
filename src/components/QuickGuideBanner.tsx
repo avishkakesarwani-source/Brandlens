@@ -5,6 +5,7 @@ interface QuickGuideBannerProps {
   onLoadDemo: () => void;
   onAutoFix: () => void;
   onOpenApproval: () => void;
+  onOpenFullGuide?: () => void;
   hasPendingFlags: boolean;
   allResolved: boolean;
 }
@@ -13,6 +14,7 @@ export const QuickGuideBanner: React.FC<QuickGuideBannerProps> = ({
   onLoadDemo,
   onAutoFix,
   onOpenApproval,
+  onOpenFullGuide,
   hasPendingFlags,
   allResolved
 }) => {
@@ -49,6 +51,14 @@ export const QuickGuideBanner: React.FC<QuickGuideBannerProps> = ({
             How BrandLens Works (In 3 Simple Steps)
           </span>
           <span className="text-xs text-slate-400 hidden sm:inline">· No training needed</span>
+          {onOpenFullGuide && (
+            <button
+              onClick={onOpenFullGuide}
+              className="ml-2 text-xs font-semibold text-teal-300 hover:text-teal-100 underline decoration-teal-400/50 hover:decoration-teal-200 transition-colors"
+            >
+              (Open Full Manual ➔)
+            </button>
+          )}
         </div>
 
         <button 

@@ -17,6 +17,7 @@ import { ApiSettingsModal } from './components/ApiSettingsModal';
 import { ExportReportModal } from './components/ExportReportModal';
 import { AdVariantComparatorModal } from './components/AdVariantComparatorModal';
 import { RegulatoryRiskRadar } from './components/RegulatoryRiskRadar';
+import { HowToUseGuide } from './components/HowToUseGuide';
 import { defaultEngine } from './services/analyzer';
 import { SAMPLE_DRAFTS, ECOGLOW_BRAND_KIT, FINEDGE_BRAND_KIT } from './data/mockBrandKit';
 import type { SampleDraft } from './data/mockBrandKit';
@@ -33,7 +34,7 @@ export function App() {
   const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'unverified' | 'contradicted' | 'tone' | 'resolved'>('all');
   const [activeView, setActiveView] = useState<'inspect' | 'diff'>('inspect');
-  const [activeTab, setActiveTab] = useState<'text' | 'image' | 'analytics'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'image' | 'analytics' | 'guide'>('text');
   const [currentUserRole, setCurrentUserRole] = useState<UserRole>('Creator');
   const [soundEnabled, setSoundEnabled] = useState(true);
   
@@ -367,6 +368,7 @@ export function App() {
           onLoadDemo={() => handleSelectSample(SAMPLE_DRAFTS[0])}
           onAutoFix={handleAutoFixAll}
           onOpenApproval={() => setIsApprovalOpen(true)}
+          onOpenFullGuide={() => setActiveTab('guide')}
           hasPendingFlags={pendingFlags.length > 0}
           allResolved={allResolved}
         />
@@ -563,6 +565,19 @@ export function App() {
           />
         )}
 
+        {/* Tab 4: Dedicated How to Use & Platform Guide */}
+        {activeTab === 'guide' && (
+          <HowToUseGuide
+            brandKit={activeBrandKit}
+            onGoToDraftChecker={() => setActiveTab('text')}
+            onGoToImageStudio={() => setActiveTab('image')}
+            onGoToAnalytics={() => setActiveTab('analytics')}
+            onLoadDemoDraft={() => handleSelectSample(SAMPLE_DRAFTS[0])}
+            onOpenAdComparator={() => setIsAdComparatorOpen(true)}
+            onOpenExportReport={() => setIsExportReportOpen(true)}
+          />
+        )}
+
       </main>
 
       {/* Professional Footer */}
@@ -573,10 +588,10 @@ export function App() {
           </span>
           <div className="flex items-center space-x-4 text-xs">
             <button 
-              onClick={() => setIsHelpOpen(true)}
+              onClick={() => setActiveTab('guide')}
               className="text-teal-700 dark:text-teal-400 hover:underline font-semibold"
             >
-              How It Works (Guide)
+              How to Use (Guide)
             </button>
             <span>·</span>
             <button 

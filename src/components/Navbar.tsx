@@ -40,8 +40,8 @@ interface NavbarProps {
   onToggleSound: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
-  activeTab: 'text' | 'image' | 'analytics';
-  onSelectTab: (tab: 'text' | 'image' | 'analytics') => void;
+  activeTab: 'text' | 'image' | 'analytics' | 'guide';
+  onSelectTab: (tab: 'text' | 'image' | 'analytics' | 'guide') => void;
   currentUserRole: UserRole;
   onChangeUserRole: (role: UserRole) => void;
 }
@@ -129,6 +129,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <BarChart3 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Rules Dashboard</span>
+            </button>
+
+            <button
+              onClick={() => onSelectTab('guide')}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                activeTab === 'guide'
+                  ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <span>How to Use</span>
             </button>
           </div>
 
